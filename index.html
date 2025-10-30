@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Todo List App</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter font family -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom styles for the task content to prevent text overflow */
+        .task-content {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Main Application Container -->
+    <div id="app" class="flex-grow max-w-4xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center py-4 border-b border-gray-200 mb-6">
+            <h1 class="text-3xl font-extrabold text-teal-600">Gemini Todo List</h1>
+            <div id="auth-controls" class="flex items-center space-x-3">
+                <!-- User Info Placeholder -->
+            </div>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20 text-gray-500">
+            <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-lg">Initializing Firebase...</p>
+        </div>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="hidden">
+            
+            <!-- Auth Wall (Sign In Prompt) -->
+            <div id="auth-wall" class="hidden flex flex-col items-center justify-center text-center py-20 bg-white rounded-xl shadow-lg border border-gray-100">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-teal-500 mb-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
+                </svg>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Sign In to Manage Your Tasks</h2>
+                <p class="text-gray-600 mb-6">Your todo list is secured and synchronized across all your devices using your Google Account.</p>
+                <button onclick="googleSignIn()" class="bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 px-6 rounded-full shadow-lg transition duration-200 flex items-center">
+                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3"><path fill="#4285f4" d="M533.5 272.2c0-18.7-1.7-36.9-4.8-54.7H272.1v104.9h146.4c-6.7 35.8-26.6 66.8-54 87.7l-.1.1 83.1 64.1.6.6c51.2-47.5 81.3-116.5 81.3-199.1z"/><path fill="#34a853" d="M272.1 544.3c73.5 0 135.5-24.3 180.4-66l-83.1-64.1c-22.1 14.8-50.6 23.5-97.3 23.5-74.8 0-138.2-50.5-161.4-118.4l-.7-.1-81.8 63-.1.7c47.2 93.3 145.4 156.4 246.3 156.4z"/><path fill="#fbbc04" d="M110.7 325.3c-5.1-14.8-8-30.8-8-48.1s2.9-33.3 8-48.1l-.3-.1-83.1-64.1-.4-.1C3.3 152 0 209.7 0 272.2s3.3 120.2 27.2 176.6l83.5-64.4z"/><path fill="#ea4335" d="M272.1 107.5c41.3 0 77.8 14.2 106.8 41.9l73.4-71.5c-44.5-41.5-103.1-67.9-180.2-67.9C126.6 42 28.5 105.1 0 198.4l83.5 64.4c23.2-67.9 86.5-118.4 161.4-118.4z"/></svg>
+                    Sign in with Google
+                </button>
+                <a id="anonymous-sign-in-link" href="#" class="mt-4 text-sm text-gray-500 hover:text-teal-600 underline">Continue as Guest (Tasks will NOT be cross-device compatible)</a>
+            </div>
+
+            <!-- Tasks Interface (Visible when signed in) -->
+            <div id="notes-interface" class="hidden">
+                
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-700">Your Tasks</h2>
+                    <button onclick="openNoteModal()" class="bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                        New Task
+                    </button>
+                </div>
+                
+                <!-- Tasks List -->
+                <div id="notes-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- Tasks will be inserted here by JavaScript -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden text-center py-16 bg-white rounded-xl shadow-inner mt-8">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400 mx-auto mb-3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.239 12.378h6.104M14.73 17.039h6.104m.024 4.091h-6.104M8.625 10.5h.008M21 16.5a2.25 2.25 0 01-2.25 2.25H9.75A2.25 2.25 0 017.5 16.5v-6A2.25 2.25 0 019.75 8.25h10.5A2.25 2.25 0 0122.5 10.5v6" />
+                    </svg>
+                    <p class="text-gray-500">You don't have any tasks yet. Click "New Task" to get started!</p>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Task Modal (New/Edit Task) -->
+    <div id="note-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="p-6">
+                <h3 id="modal-title" class="text-xl font-semibold text-gray-900 mb-4">Create New Task</h3>
+                <form id="note-form" onsubmit="saveNote(event)">
+                    <input type="hidden" id="note-id">
+                    <div class="mb-4">
+                        <label for="note-title" class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                        <input type="text" id="note-title" placeholder="What needs to be done?" class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="note-content" class="block text-sm font-medium text-gray-700 mb-1">Details (Optional)</label>
+                        <textarea id="note-content" rows="3" placeholder="Add any details or subtasks..." class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border"></textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label for="note-deadline" class="block text-sm font-medium text-gray-700 mb-1">Deadline (Optional)</label>
+                        <input type="datetime-local" id="note-deadline" class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border">
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeNoteModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-150">Cancel</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-md transition duration-150">Save Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Modal -->
+    <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
+            <div class="p-6">
+                <h3 id="message-modal-title" class="text-lg font-semibold text-gray-900 mb-2"></h3>
+                <p id="message-modal-content" class="text-sm text-gray-600 mb-6"></p>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeMessageModal()" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-md transition duration-150">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Firebase SDK Imports and App Logic -->
+    <script type="module">
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-todo-app';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZAl0HY7kkTmUztjREZJ8rLAamSoI0bK8",
+            authDomain: "todo-list-e2c31.firebaseapp.com",
+            projectId: "todo-list-e2c31",
+            storageBucket: "todo-list-e2c31.firebasestorage.app",
+            messagingSenderId: "324100323047",
+            appId: "1:324100323047:web:ba12c2153215c74c9a9442",
+            measurementId: "G-44VTRKSHG7"
+        };
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            doc, 
+            collection, 
+            query, 
+            onSnapshot, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc,
+            serverTimestamp,
+            Timestamp
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+        // --- FIREBASE INITIALIZATION ---
+        let app;
+        let db;
+        let auth;
+        let userId = null;
+        let unsubscribeNotes = null;
+        let countdownInterval = null; // Global variable for the countdown timer
+
+        if (firebaseConfig) {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            setLogLevel('Debug'); // Enable Firestore logging
+        } else {
+            showMessage("Error", "Firebase configuration is missing. Cannot initialize the app.");
+        }
+
+
+        /**
+         * Generates the Firestore path for a user's private notes collection.
+         * @returns {string} The full Firestore path.
+         */
+        function getNotesPath(uid) {
+            // Path: /artifacts/{appId}/users/{userId}/tasks
+            return `artifacts/${appId}/users/${uid}/tasks`;
+        }
+
+        /**
+         * Custom message box function (replaces alert()).
+         * @param {string} title - The title of the message.
+         * @param {string} content - The main message content.
+         */
+        function showMessage(title, content) {
+            document.getElementById('message-modal-title').textContent = title;
+            document.getElementById('message-modal-content').textContent = content;
+            document.getElementById('message-modal').classList.remove('hidden');
+        }
+
+        window.closeMessageModal = () => {
+            document.getElementById('message-modal').classList.add('hidden');
+        };
+
+        // --- AUTHENTICATION FUNCTIONS ---
+        window.googleSignIn = async () => {
+            if (!auth) return;
+            const provider = new GoogleAuthProvider();
+            try {
+                // Request sign-in via pop-up
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+                showMessage("Sign-In Failed", `Error during sign-in: ${error.message}`);
+            }
+        };
+
+        window.signOutUser = async () => {
+            if (!auth) return;
+            try {
+                if (unsubscribeNotes) {
+                    unsubscribeNotes(); // Stop listening to tasks
+                }
+                if (countdownInterval) {
+                    clearInterval(countdownInterval); // Stop countdown timer
+                }
+                await signOut(auth);
+            } catch (error) {
+                console.error("Sign-Out Error:", error);
+                showMessage("Sign-Out Failed", `Error during sign-out: ${error.message}`);
+            }
+        };
+
+        window.anonymousSignIn = async (e) => {
+            e.preventDefault();
+            if (!auth) return;
+            try {
+                if (!initialAuthToken) {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Anonymous Sign-In Error:", error);
+                showMessage("Sign-In Failed", `Error during anonymous sign-in: ${error.message}`);
+            }
+        }
+
+        // --- UI RENDERING & AUTH STATE MANAGEMENT ---
+
+        /**
+         * Renders the header controls based on the user's authentication state.
+         * (Logic remains similar to previous version, updated styles)
+         */
+        function renderHeader(user) {
+            const authControls = document.getElementById('auth-controls');
+            authControls.innerHTML = '';
+            
+            if (user) {
+                const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
+                const isAnonymous = user.isAnonymous;
+                const displayName = user.displayName || (isAnonymous ? 'Guest User' : 'User');
+                const profilePic = user.photoURL || `https://placehold.co/32x32/059669/ffffff?text=${displayName[0] || '?'}`;
+
+                let statusText = '';
+                if (isGoogleUser) {
+                    statusText = `Signed in as ${displayName}`;
+                } else if (isAnonymous) {
+                    statusText = `Guest Mode (UID: ${user.uid.substring(0, 8)}...)`;
+                }
+
+                authControls.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="relative group">
+                            <img src="${profilePic}" onerror="this.onerror=null; this.src='https://placehold.co/32x32/059669/ffffff?text=U';" class="w-8 h-8 rounded-full border-2 border-teal-500 cursor-pointer" title="${statusText}">
+                            <div class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl p-4 hidden group-hover:block z-50 border border-gray-100">
+                                <p class="text-sm font-semibold text-gray-800">${displayName}</p>
+                                <p class="text-xs text-gray-500 break-all">${user.email || 'No email (Anonymous/Guest)'}</p>
+                                <p class="text-xs text-gray-500 mt-1">UID: <span class="font-mono text-gray-600">${user.uid}</span></p>
+                                <button onclick="signOutUser()" class="mt-3 w-full text-sm text-center text-white bg-red-500 hover:bg-red-600 py-1.5 rounded-lg transition">Sign Out</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('auth-wall').classList.add('hidden');
+                document.getElementById('notes-interface').classList.remove('hidden');
+
+            } else {
+                document.getElementById('auth-wall').classList.remove('hidden');
+                document.getElementById('notes-interface').classList.add('hidden');
+                
+                authControls.innerHTML = `
+                    <button onclick="googleSignIn()" class="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-full shadow-md transition duration-200">
+                        Sign In
+                    </button>
+                `;
+            }
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+
+            if (user) {
+                userId = user.uid;
+                renderHeader(user);
+                
+                if (initialAuthToken && user.isAnonymous) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (e) {
+                        console.warn("Failed to sign in with custom token. Continuing anonymously.", e);
+                    }
+                }
+                
+                startNotesListener(userId);
+
+            } else {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken).catch(async (error) => {
+                        console.warn("Custom token failed. Signing in anonymously.", error);
+                        await signInAnonymously(auth);
+                    });
+                } else {
+                    userId = null;
+                    renderHeader(null);
+                    document.getElementById('notes-list').innerHTML = '';
+                    if (countdownInterval) clearInterval(countdownInterval);
+                }
+            }
+        });
+
+        // --- FIRESTORE TASKS LOGIC (CRUD) ---
+
+        /**
+         * Attaches the real-time listener for the user's tasks.
+         */
+        function startNotesListener(uid) {
+            if (unsubscribeNotes) {
+                unsubscribeNotes(); 
+            }
+            
+            const notesRef = collection(db, getNotesPath(uid));
+            // Query with no orderBy to avoid needing indexes, we sort client-side.
+            const q = query(notesRef); 
+
+            unsubscribeNotes = onSnapshot(q, (snapshot) => {
+                const notes = [];
+                snapshot.forEach((doc) => {
+                    notes.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Client-side sort: Uncompleted tasks first, then by earliest deadline, then by creation time.
+                notes.sort((a, b) => {
+                    // 1. Sort by completion status (false comes before true)
+                    if (a.isCompleted !== b.isCompleted) {
+                        return (a.isCompleted ? 1 : -1);
+                    }
+                    
+                    // 2. Sort by deadline (closest deadline first for uncompleted tasks)
+                    const deadlineA = a.deadline ? a.deadline.toMillis() : Infinity;
+                    const deadlineB = b.deadline ? b.deadline.toMillis() : Infinity;
+                    if (deadlineA !== deadlineB) {
+                        return deadlineA - deadlineB;
+                    }
+
+                    // 3. Fallback to timestamp (newest first)
+                    const timeA = a.timestamp?.toMillis() || 0;
+                    const timeB = b.timestamp?.toMillis() || 0;
+                    return timeB - timeA;
+                });
+                
+                renderNotes(notes);
+                startCountdownTimer(notes);
+            }, (error) => {
+                console.error("Error fetching tasks:", error);
+                showMessage("Database Error", "Could not load your tasks. Check the console for details.");
+            });
+        }
+        
+        /**
+         * Real-time timer logic for the countdown.
+         */
+        function startCountdownTimer(notes) {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            const uncompletedNotesWithDeadlines = notes.filter(n => !n.isCompleted && n.deadline);
+            
+            if (uncompletedNotesWithDeadlines.length === 0) {
+                return; 
+            }
+
+            countdownInterval = setInterval(() => {
+                const now = Date.now();
+                
+                uncompletedNotesWithDeadlines.forEach(note => {
+                    const countdownEl = document.getElementById(`countdown-${note.id}`);
+                    if (!countdownEl) return;
+
+                    // Get deadline time in milliseconds
+                    // note.deadline is a Firestore Timestamp object, use .toMillis()
+                    const deadlineTime = note.deadline.toMillis(); 
+                    const distance = deadlineTime - now;
+                    
+                    countdownEl.classList.remove('text-red-600', 'text-yellow-600', 'text-green-600');
+
+                    if (distance < 0) {
+                        // Deadline passed
+                        countdownEl.textContent = "DEADLINE PASSED";
+                        countdownEl.classList.add('text-red-600', 'font-bold');
+                    } else {
+                        // Time remaining calculation
+                        const totalSeconds = Math.floor(distance / 1000);
+                        const days = Math.floor(totalSeconds / (60 * 60 * 24));
+                        const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+                        const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+                        const seconds = totalSeconds % 60;
+
+                        countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+                        // Color coding based on remaining time
+                        if (days < 1) {
+                            countdownEl.classList.add('text-yellow-600', 'font-semibold'); // Less than 24 hours
+                        } else {
+                            countdownEl.classList.add('text-green-600'); // More than 24 hours
+                        }
+                    }
+                });
+            }, 1000);
+        }
+
+        /**
+         * Renders the list of tasks to the UI.
+         */
+        function renderNotes(notes) {
+            const notesList = document.getElementById('notes-list');
+            notesList.innerHTML = '';
+            
+            if (notes.length === 0) {
+                document.getElementById('empty-state').classList.remove('hidden');
+            } else {
+                document.getElementById('empty-state').classList.add('hidden');
+            }
+
+            notes.forEach(note => {
+                const isCompleted = !!note.isCompleted;
+                const deadlineDate = note.deadline ? new Date(note.deadline.toMillis()).toLocaleString() : 'No Deadline';
+                
+                const cardClasses = isCompleted 
+                    ? 'bg-gray-50 border-gray-200 opacity-60' 
+                    : 'bg-white border-teal-100 hover:shadow-xl';
+
+                const titleClasses = isCompleted ? 'line-through text-gray-500' : 'text-gray-800';
+                const contentClasses = isCompleted ? 'line-through text-gray-400' : 'text-gray-600';
+                
+                const noteCard = document.createElement('div');
+                noteCard.className = `rounded-xl shadow-lg transition duration-300 p-5 flex flex-col justify-between border ${cardClasses}`;
+                noteCard.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1 mr-4">
+                            <h3 class="text-xl font-bold mb-1 ${titleClasses}">${note.title}</h3>
+                            <p class="text-sm task-content ${contentClasses}">${note.content || 'No details provided.'}</p>
+                        </div>
+                        <input type="checkbox" ${isCompleted ? 'checked' : ''} 
+                            onchange="toggleCompletion('${note.id}', event.target.checked)"
+                            class="w-6 h-6 mt-1 text-teal-600 bg-gray-100 border-gray-300 rounded focus:ring-teal-500 cursor-pointer">
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-gray-100 flex flex-col space-y-2 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium text-gray-500">Deadline:</span>
+                            <span class="text-gray-700">${deadlineDate}</span>
+                        </div>
+                        ${note.deadline && !isCompleted ? `
+                            <div class="flex justify-between items-center font-mono">
+                                <span class="font-medium text-gray-500">Time Left:</span>
+                                <span id="countdown-${note.id}" class="text-xs font-bold">...</span>
+                            </div>
+                        ` : ''}
+                        <div class="flex justify-end space-x-2 mt-2">
+                            <button onclick="openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', '${note.content.replace(/'/g, "\\'")}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0, 16) : ''}')" 
+                                class="text-teal-500 hover:text-teal-700 p-1 rounded-full hover:bg-teal-50 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9" />
+                                </svg>
+                            </button>
+                            <button onclick="deleteNote('${note.id}')" 
+                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79M6.57 3.24c.342.052.682.107 1.022.166m-1.022-.166L7.84 21.673a2.25 2.25 0 002.244 2.077h4.056a2.25 2.25 0 002.244-2.077L19.26 3.79M6.57 3.24c.342.052.682.107 1.022.166M8.25 6.75h9.75" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                notesList.appendChild(noteCard);
+            });
+        }
+
+        window.saveNote = async (event) => {
+            event.preventDefault();
+            if (!userId) {
+                showMessage("Authentication Required", "Please sign in to save tasks.");
+                return;
+            }
+
+            const noteId = document.getElementById('note-id').value;
+            const title = document.getElementById('note-title').value.trim();
+            const content = document.getElementById('note-content').value.trim();
+            const deadlineInput = document.getElementById('note-deadline').value;
+
+            if (!title) {
+                showMessage("Validation Error", "Task title cannot be empty.");
+                return;
+            }
+
+            // Create a base object
+            const noteData = {
+                title: title,
+                content: content,
+                // Always update the time the task was last modified/saved
+                timestamp: serverTimestamp() 
+            };
+
+            // Process deadline
+            if (deadlineInput) {
+                // Convert ISO 8601 string from datetime-local input to Firestore Timestamp
+                noteData.deadline = Timestamp.fromDate(new Date(deadlineInput));
+            } else {
+                noteData.deadline = null; // Ensure null if deadline is removed
+            }
+
+            try {
+                if (noteId) {
+                    // Update existing task
+                    const noteRef = doc(db, getNotesPath(userId), noteId);
+                    await updateDoc(noteRef, noteData);
+                    showMessage("Success", "Task updated successfully!");
+                } else {
+                    // Add new task
+                    // Set isCompleted to false for new tasks
+                    noteData.isCompleted = false; 
+                    const notesCollectionRef = collection(db, getNotesPath(userId));
+                    await addDoc(notesCollectionRef, noteData);
+                    showMessage("Success", "Task created successfully!");
+                }
+                closeNoteModal();
+            } catch (error) {
+                console.error("Error saving task:", error);
+                showMessage("Save Error", `Failed to save task: ${error.message}`);
+            }
+        };
+
+        window.toggleCompletion = async (noteId, isCompleted) => {
+            if (!userId) return;
+            try {
+                const noteRef = doc(db, getNotesPath(userId), noteId);
+                // Update only the completion status
+                await updateDoc(noteRef, { isCompleted: isCompleted });
+            } catch (error) {
+                console.error("Error toggling completion:", error);
+                showMessage("Update Error", `Failed to update task status: ${error.message}`);
+            }
+        };
+
+        window.deleteNote = async (noteId) => {
+            if (!userId) return;
+            
+            try {
+                const noteRef = doc(db, getNotesPath(userId), noteId);
+                await deleteDoc(noteRef);
+                showMessage("Success", "Task deleted successfully!");
+            } catch (error) {
+                console.error("Error deleting task:", error);
+                showMessage("Delete Error", `Failed to delete task: ${error.message}`);
+            }
+        };
+
+        // --- MODAL UTILITIES ---
+
+        /**
+         * Opens the modal for creating or editing a task.
+         * @param {string} id - Task ID.
+         * @param {string} title - Task title.
+         * @param {string} content - Task content.
+         * @param {string} deadlineIsoString - Deadline time in YYYY-MM-DDThh:mm format.
+         */
+        window.openNoteModal = (id = '', title = '', content = '', deadlineIsoString = '') => {
+            document.getElementById('note-id').value = id;
+            document.getElementById('note-title').value = title;
+            // Decode content since it was encoded for the onclick attribute
+            document.getElementById('note-content').value = content; 
+            document.getElementById('note-deadline').value = deadlineIsoString;
+            
+            document.getElementById('modal-title').textContent = id ? 'Edit Task' : 'Create New Task';
+            document.getElementById('note-modal').classList.remove('hidden');
+        };
+
+        window.closeNoteModal = () => {
+            document.getElementById('note-modal').classList.add('hidden');
+            document.getElementById('note-form').reset();
+        };
+
+        // Initialize Anonymous Sign-In handler
+        window.onload = () => {
+            document.getElementById('anonymous-sign-in-link').addEventListener('click', anonymousSignIn);
+        };
+        
+    </script>
+</body>
+</html>
