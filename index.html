@@ -245,7 +245,7 @@
         <header class="flex justify-between items-center py-4 border-b border-gray-200 mb-6">
             <div class="flex items-center space-x-4">
                 <h1 class="text-3xl font-extrabold text-teal-600">Task Manager</h1>
-                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.2</span>
+                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.3</span>
             </div>
             <div id="auth-controls" class="flex items-center space-x-3">
                 <!-- User Info Placeholder -->
@@ -325,8 +325,12 @@
                         <textarea id="note-content" rows="3" placeholder="Add any details or subtasks..." class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border"></textarea>
                     </div>
                     <div class="mb-6">
-                        <label for="note-deadline" class="block text-sm font-medium text-gray-700 mb-1">Deadline (Optional)</label>
-                        <input type="datetime-local" id="note-deadline" class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deadline (Optional)</label>
+                        <div class="flex space-x-3">
+                            <input type="date" id="note-deadline-date" class="w-1/2 border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border" />
+                            <input type="time" id="note-deadline-time" class="w-1/2 border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border" />
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">Set a date (required to create a deadline). Time is optional — when omitted the deadline will be at noon that day.</p>
                     </div>
                     <div class="flex justify-end space-x-3">
                         <button type="button" onclick="closeNoteModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-150">Cancel</button>
@@ -813,7 +817,7 @@
                             </div>
                         ` : ''}
                         <div class="flex justify-end space-x-2 mt-2">
-                            <button onclick="openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', '${note.content.replace(/'/g, "\\'")}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0, 16) : ''}')" 
+                            <button onclick="openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', '${(note.content||'').replace(/'/g, "\\'")}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : ''}', '${note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : ''}')" 
                                 class="text-teal-500 hover:text-teal-700 p-1 rounded-full hover:bg-teal-50 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
@@ -833,58 +837,62 @@
         }
 
         window.saveNote = async (event) => {
-            event.preventDefault();
-            if (!userId) {
-                showMessage("Authentication Required", "Please sign in to save tasks.");
-                return;
-            }
-
-            const noteId = document.getElementById('note-id').value;
-            const title = document.getElementById('note-title').value.trim();
-            const content = document.getElementById('note-content').value.trim();
-            const deadlineInput = document.getElementById('note-deadline').value;
-
-            if (!title) {
-                showMessage("Validation Error", "Task title cannot be empty.");
-                return;
-            }
-
-            // Create a base object
-            const noteData = {
-                title: title,
-                content: content,
-                // Always update the time the task was last modified/saved
-                timestamp: serverTimestamp() 
-            };
-
-            // Process deadline
-            if (deadlineInput) {
-                // Convert ISO 8601 string from datetime-local input to Firestore Timestamp
-                noteData.deadline = Timestamp.fromDate(new Date(deadlineInput));
+             event.preventDefault();
+             if (!userId) {
+                 showMessage("Authentication Required", "Please sign in to save tasks.");
+                 return;
+             }
+ 
+             const noteId = document.getElementById('note-id').value;
+             const title = document.getElementById('note-title').value.trim();
+             const content = document.getElementById('note-content').value.trim();
+             const deadlineDate = document.getElementById('note-deadline-date').value;
+             const deadlineTime = document.getElementById('note-deadline-time').value; // optional
+ 
+             if (!title) {
+                 showMessage("Validation Error", "Task title cannot be empty.");
+                 return;
+             }
+ 
+             // Create a base object
+             const noteData = {
+                 title: title,
+                 content: content,
+                 // Always update the time the task was last modified/saved
+                 timestamp: serverTimestamp() 
+             };
+ 
+             // Process deadline
+            if (deadlineDate) {
+                // If time omitted, default to noon (12:00)
+                const timePart = deadlineTime && deadlineTime.length ? deadlineTime : '12:00';
+                // Build a local datetime string and convert to Date
+                const combined = `${deadlineDate}T${timePart}:00`;
+                noteData.deadline = Timestamp.fromDate(new Date(combined));
             } else {
-                noteData.deadline = null; // Ensure null if deadline is removed
+                noteData.deadline = null;
             }
-
-            try {
-                if (noteId) {
-                    // Update existing task
-                    const noteRef = doc(db, getNotesPath(userId), noteId);
-                    await updateDoc(noteRef, noteData);
-                    showMessage("Success", "Task updated successfully!");
-                } else {
-                    // Add new task
-                    // Set isCompleted to false for new tasks
-                    noteData.isCompleted = false; 
-                    const notesCollectionRef = collection(db, getNotesPath(userId));
-                    await addDoc(notesCollectionRef, noteData);
-                    showMessage("Success", "Task created successfully!");
-                }
-                closeNoteModal();
-            } catch (error) {
-                console.error("Error saving task:", error);
-                showMessage("Save Error", `Failed to save task: ${error.message}`);
-            }
-        };
+ 
+             try {
+                 if (noteId) {
+                     // Update existing task
+                     const noteRef = doc(db, getNotesPath(userId), noteId);
+                     await updateDoc(noteRef, noteData);
+                     showMessage("Success", "Task updated successfully!");
+                 } else {
+                     // Add new task
+                     // Set isCompleted to false for new tasks
+                     noteData.isCompleted = false; 
+                     const notesCollectionRef = collection(db, getNotesPath(userId));
+                     await addDoc(notesCollectionRef, noteData);
+                     showMessage("Success", "Task created successfully!");
+                 }
+                 closeNoteModal();
+             } catch (error) {
+                 console.error("Error saving task:", error);
+                 showMessage("Save Error", `Failed to save task: ${error.message}`);
+             }
+         };
 
         window.toggleCompletion = async (noteId, isCompleted) => {
             if (!userId) return;
@@ -918,14 +926,16 @@
          * @param {string} id - Task ID.
          * @param {string} title - Task title.
          * @param {string} content - Task content.
-         * @param {string} deadlineIsoString - Deadline time in YYYY-MM-DDThh:mm format.
+         * @param {string} dateStr - Deadline date in YYYY-MM-DD or empty.
+         * @param {string} timeStr - Deadline time in HH:MM or empty.
          */
-        window.openNoteModal = (id = '', title = '', content = '', deadlineIsoString = '') => {
+        window.openNoteModal = (id = '', title = '', content = '', dateStr = '', timeStr = '') => {
             document.getElementById('note-id').value = id;
             document.getElementById('note-title').value = title;
             // Decode content since it was encoded for the onclick attribute
-            document.getElementById('note-content').value = content; 
-            document.getElementById('note-deadline').value = deadlineIsoString;
+            document.getElementById('note-content').value = content;
+            document.getElementById('note-deadline-date').value = dateStr || '';
+            document.getElementById('note-deadline-time').value = timeStr || '';
             
             document.getElementById('modal-title').textContent = id ? 'Edit Task' : 'Create New Task';
             document.getElementById('note-modal').classList.remove('hidden');
@@ -934,6 +944,9 @@
         window.closeNoteModal = () => {
             document.getElementById('note-modal').classList.add('hidden');
             document.getElementById('note-form').reset();
+            // ensure date/time inputs cleared too
+            if (document.getElementById('note-deadline-date')) document.getElementById('note-deadline-date').value = '';
+            if (document.getElementById('note-deadline-time')) document.getElementById('note-deadline-time').value = '';
         };
 
         // Initialize Anonymous Sign-In handler and ensure theme applied on load
