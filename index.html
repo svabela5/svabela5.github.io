@@ -9,10 +9,38 @@
     <!-- Use Inter font family -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        :root{
+            --bg: #f3f4f6;
+            --fg: #111827;
+            --card-bg: #ffffff;
+            --muted: #6b7280;
+        }
+        .dark {
+            --bg: #071023;
+            --fg: #e6eef6;
+            --card-bg: #0b1220;
+            --muted: #9aa7bf;
+        }
+
+        html, body { height: 100%; }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: var(--bg);
+            color: var(--fg);
+            transition: background-color 200ms ease, color 200ms ease;
         }
+
+        /* Make existing Tailwind utility classes adapt to theme */
+        .bg-white { background-color: var(--card-bg) !important; }
+        .text-gray-900 { color: var(--fg) !important; }
+        .text-gray-800 { color: var(--fg) !important; } /* <- ensure note titles follow theme */
+        .text-gray-700 { color: var(--fg) !important; }
+        .text-gray-600 { color: var(--muted) !important; }
+        .text-gray-500 { color: var(--muted) !important; }
+        .text-gray-400 { color: var(--muted) !important; } /* completed/note-muted text */
+        .border-gray-100 { border-color: rgba(148,163,184,0.08) !important; }
+
         /* Custom styles for the task content to prevent text overflow */
         .task-content {
             display: -webkit-box;
@@ -218,6 +246,55 @@
             document.getElementById('message-modal').classList.add('hidden');
         };
 
+        // --- THEME UTILITIES ---
+        function isDarkMode() {
+            return document.documentElement.classList.contains('dark');
+        }
+
+        function applySavedTheme() {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else if (saved === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                // No saved preference: follow system
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+        }
+
+        window.toggleTheme = (event) => {
+            // If invoked from an <input> change event, use its checked state
+            const explicit = typeof event === 'object' && event.target !== undefined;
+            if (explicit) {
+                const checked = event.target.checked;
+                if (checked) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+                return;
+            }
+
+            // Otherwise toggle
+            if (isDarkMode()) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        };
+
+        // Apply theme as early as possible
+        applySavedTheme();
+
         // --- AUTHENTICATION FUNCTIONS ---
         window.googleSignIn = async () => {
             if (!auth) return;
@@ -283,19 +360,54 @@
                     statusText = `Guest Mode (UID: ${user.uid.substring(0, 8)}...)`;
                 }
 
+                // Determine initial checked state for theme toggle
+                const themeChecked = localStorage.getItem('theme') === 'dark' || (localStorage.getItem('theme') === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
                 authControls.innerHTML = `
                     <div class="flex items-center space-x-3">
                         <div class="relative profile-container">
                             <img src="${profilePic}" onerror="this.onerror=null; this.src='https://placehold.co/32x32/059669/ffffff?text=U';" class="w-8 h-8 rounded-full border-2 border-teal-500 cursor-pointer" title="${statusText}" onclick="toggleProfileDropdown('${user.uid}')">
-                            <div id="profile-dropdown-${user.uid}" class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl p-4 hidden z-50 border border-gray-100">
+                            <div id="profile-dropdown-${user.uid}" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl p-4 hidden z-50 border border-gray-100">
                                 <p class="text-sm font-semibold text-gray-800">${displayName}</p>
                                 <p class="text-xs text-gray-500 break-all">${user.email || 'No email (Anonymous/Guest)'}</p>
                                 <p class="text-xs text-gray-500 mt-1">UID: <span class="font-mono text-gray-600">${user.uid}</span></p>
+
+                                <!-- Theme switch (visual switch with knob) -->
+                                <div class="mt-3 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-700">Theme</p>
+                                        <p class="text-xs text-gray-500">Switch between Light and Dark</p>
+                                    </div>
+                                    <div class="ml-4">
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input id="theme-toggle-${user.uid}" type="checkbox" ${themeChecked ? 'checked' : ''} class="sr-only peer" onchange="toggleTheme(event)">
+                                            <!-- track -->
+                                            <span class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-teal-300 dark:bg-gray-700 peer-checked:bg-teal-600 transition-colors"></span>
+                                            <!-- knob -->
+                                            <span class="absolute left-0 top-0 mt-0.5 ml-0.5 bg-white dark:bg-gray-800 w-5 h-5 rounded-full shadow transform transition-transform peer-checked:translate-x-5"></span>
+                                            <!-- label text -->
+                                            <span id="theme-label-${user.uid}" class="ml-14 text-sm font-medium text-gray-700">${themeChecked ? 'Dark' : 'Light'}</span>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 <button onclick="signOutUser()" class="mt-3 w-full text-sm text-center text-white bg-red-500 hover:bg-red-600 py-1.5 rounded-lg transition">Sign Out</button>
                             </div>
                         </div>
                     </div>
                 `;
+
+                // Ensure the dropdown's toggle label reflects current theme when opened
+                setTimeout(() => {
+                    const toggle = document.getElementById(`theme-toggle-${user.uid}`);
+                    const label = document.getElementById(`theme-label-${user.uid}`);
+                    if (toggle) {
+                        if (label) label.textContent = toggle.checked ? 'Dark' : 'Light';
+                        toggle.addEventListener('change', () => {
+                            if (label) label.textContent = toggle.checked ? 'Dark' : 'Light';
+                        });
+                    }
+                }, 50);
 
                 document.getElementById('auth-wall').classList.add('hidden');
                 document.getElementById('notes-interface').classList.remove('hidden');
@@ -635,9 +747,12 @@
             document.getElementById('note-form').reset();
         };
 
-        // Initialize Anonymous Sign-In handler
+        // Initialize Anonymous Sign-In handler and ensure theme applied on load
         window.onload = () => {
-            document.getElementById('anonymous-sign-in-link').addEventListener('click', anonymousSignIn);
+            // Re-apply theme (defensive) and wire anonymous sign-in link
+            applySavedTheme();
+            const anonLink = document.getElementById('anonymous-sign-in-link');
+            if (anonLink) anonLink.addEventListener('click', anonymousSignIn);
         };
         
     </script>
