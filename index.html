@@ -17,15 +17,19 @@
             --muted: #6b7280;
             --card-muted-bg: #f8fafc; /* for completed card in light mode */
             --card-border-light: rgba(203,213,225,0.7);
+            --input-border: rgba(148,163,184,0.12);
+            --focus-ring: rgba(20,184,166,0.12);
         }
         .dark {
             --bg: #071023;
             --fg: #e6eef6;
-            --card-bg: #0b1220;
+            --card-bg: #071423; /* slightly lighter than page bg for modal */
             --muted: #9aa7bf;
             --card-muted-bg-dark: rgba(255,255,255,0.02); /* completed card in dark mode */
             --card-border-dark: rgba(255,255,255,0.06);
             --teal-border-dark: rgba(20,184,166,0.18);
+            --input-border: rgba(255,255,255,0.08);
+            --focus-ring: rgba(20,184,166,0.18);
         }
 
         html, body { height: 100%; }
@@ -75,6 +79,147 @@
 
         /* Small transition for card backgrounds */
         .rounded-xl { transition: background-color 200ms ease, border-color 200ms ease; }
+
+        /* ---------------------------
+           Modal / Form control fixes
+           --------------------------- */
+
+        /* Modal container panels */
+        #note-modal .bg-white,
+        #message-modal .bg-white,
+        #note-modal > div > .bg-white,
+        #message-modal > div > .bg-white {
+            background-color: var(--card-bg) !important;
+            color: var(--fg) !important;
+        }
+
+        /* Modal headings, labels and helper text */
+        #note-modal h3,
+        #note-modal label,
+        #note-modal p,
+        #message-modal h3,
+        #message-modal p {
+            color: var(--fg) !important;
+        }
+
+        /* Form controls - inputs, textarea, datetime inside modals */
+        #note-modal input,
+        #note-modal textarea,
+        #note-modal select,
+        #message-modal input,
+        #message-modal textarea,
+        #message-modal select {
+            background-color: transparent !important;
+            color: var(--fg) !important;
+            border-color: var(--input-border) !important;
+        }
+
+        /* Make the visible input backgrounds match card background for contrast */
+        #note-modal .border,
+        #message-modal .border {
+            background-color: var(--card-bg) !important;
+        }
+
+        /* Ensure inputs display a clearer border in both themes */
+        #note-modal input.border,
+        #note-modal textarea.border,
+        #note-modal input[type="datetime-local"],
+        #note-modal .rounded-lg,
+        #message-modal input.border,
+        #message-modal textarea.border {
+            border: 1px solid var(--input-border) !important;
+        }
+
+        /* Placeholder colors */
+        #note-modal input::placeholder,
+        #note-modal textarea::placeholder,
+        #message-modal input::placeholder,
+        #message-modal textarea::placeholder {
+            color: var(--muted) !important;
+            opacity: 1; /* ensure visibility */
+        }
+
+        /* Focus ring adaptation for modal inputs */
+        #note-modal input:focus,
+        #note-modal textarea:focus,
+        #message-modal input:focus,
+        #message-modal textarea:focus {
+            outline: none !important;
+            box-shadow: 0 0 0 4px var(--focus-ring) !important;
+            border-color: rgb(20,184,166) !important;
+        }
+
+        /* Small utility text inside modal uses muted color */
+        #note-modal .text-sm,
+        #message-modal .text-sm {
+            color: var(--muted) !important;
+        }
+
+        /* ---------------------------
+           Modal buttons — improve contrast
+           --------------------------- */
+
+        /* Primary action buttons (Save / OK) */
+        #note-modal button[type="submit"],
+        #message-modal button {
+            background-color: #0ea5a4 !important; /* teal-500 */
+            border-color: transparent !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(14,165,164,0.18) !important;
+            transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+        }
+        #note-modal button[type="submit"]:hover,
+        #message-modal button:hover {
+            background-color: #059669 !important; /* teal-600 */
+            transform: translateY(-1px) !important;
+            box-shadow: 0 10px 24px rgba(5,150,105,0.18) !important;
+        }
+
+        /* Secondary / cancel buttons */
+        #note-modal button[type="button"],
+        #note-modal .bg-gray-100 {
+            background-color: rgba(148,163,184,0.06) !important;
+            color: var(--fg) !important;
+            border: 1px solid rgba(148,163,184,0.08) !important;
+            transition: background-color 120ms ease, transform 120ms ease;
+        }
+        #note-modal button[type="button"]:hover,
+        #note-modal .bg-gray-100:hover {
+            background-color: rgba(148,163,184,0.10) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        /* Dark mode adjustments for modal buttons */
+        .dark #note-modal button[type="submit"],
+        .dark #message-modal button {
+            background-color: #059669 !important; /* slightly brighter in dark */
+            box-shadow: 0 8px 22px rgba(0,0,0,0.45) !important;
+        }
+        .dark #note-modal button[type="submit"]:hover,
+        .dark #message-modal button:hover {
+            background-color: #047857 !important;
+        }
+        .dark #note-modal button[type="button"],
+        .dark #note-modal .bg-gray-100 {
+            background-color: rgba(255,255,255,0.02) !important;
+            border-color: rgba(255,255,255,0.06) !important;
+            color: var(--fg) !important;
+        }
+        .dark #note-modal button[type="button"]:hover,
+        .dark #note-modal .bg-gray-100:hover {
+            background-color: rgba(255,255,255,0.04) !important;
+        }
+
+        /* Make sure modal close / overlay text remains readable */
+        #note-modal, #message-modal {
+            color: var(--fg) !important;
+        }
+
+        /* Ensure .text-white used inside buttons remains readable in dark mode (keeps white) */
+        .dark #note-modal .text-white,
+        .dark #message-modal .text-white {
+            color: #fff !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
