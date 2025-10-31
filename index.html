@@ -15,12 +15,17 @@
             --fg: #111827;
             --card-bg: #ffffff;
             --muted: #6b7280;
+            --card-muted-bg: #f8fafc; /* for completed card in light mode */
+            --card-border-light: rgba(203,213,225,0.7);
         }
         .dark {
             --bg: #071023;
             --fg: #e6eef6;
             --card-bg: #0b1220;
             --muted: #9aa7bf;
+            --card-muted-bg-dark: rgba(255,255,255,0.02); /* completed card in dark mode */
+            --card-border-dark: rgba(255,255,255,0.06);
+            --teal-border-dark: rgba(20,184,166,0.18);
         }
 
         html, body { height: 100%; }
@@ -34,14 +39,32 @@
         /* Make existing Tailwind utility classes adapt to theme */
         .bg-white { background-color: var(--card-bg) !important; }
         .text-gray-900 { color: var(--fg) !important; }
-        .text-gray-800 { color: var(--fg) !important; } /* <- ensure note titles follow theme */
+        .text-gray-800 { color: var(--fg) !important; } /* ensure note titles follow theme */
         .text-gray-700 { color: var(--fg) !important; }
         .text-gray-600 { color: var(--muted) !important; }
         .text-gray-500 { color: var(--muted) !important; }
         .text-gray-400 { color: var(--muted) !important; } /* completed/note-muted text */
         .border-gray-100 { border-color: rgba(148,163,184,0.08) !important; }
 
-        /* Custom styles for the task content to prevent text overflow */
+        /* Completed-card and related utility overrides (light mode) */
+        .bg-gray-50 { background-color: var(--card-muted-bg) !important; }
+        .border-gray-200 { border-color: var(--card-border-light) !important; }
+        .border-teal-100 { border-color: rgba(20,184,166,0.12) !important; }
+        .bg-gray-200 { background-color: #e5e7eb !important; }
+        .bg-gray-100 { background-color: #f3f4f6 !important; }
+
+        /* Dark-mode variants for those utilities */
+        .dark .bg-gray-50 { background-color: var(--card-muted-bg-dark) !important; }
+        .dark .bg-gray-200 { background-color: rgba(255,255,255,0.03) !important; }
+        .dark .border-gray-200 { border-color: var(--card-border-dark) !important; }
+        .dark .border-teal-100 { border-color: var(--teal-border-dark) !important; }
+        .dark .bg-gray-100 { background-color: rgba(255,255,255,0.02) !important; }
+
+        /* Checkbox / small elements adaptation */
+        .dark .bg-gray-100 { background-color: rgba(255,255,255,0.02) !important; }
+        .bg-gray-100 { background-color: #f3f4f6 !important; }
+
+        /* Keep the original task-content overflow clamp */
         .task-content {
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -49,6 +72,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* Small transition for card backgrounds */
+        .rounded-xl { transition: background-color 200ms ease, border-color 200ms ease; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
