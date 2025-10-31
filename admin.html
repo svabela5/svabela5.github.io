@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID-DUN! (But Make It Funny)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
+
+    <style>
+        /* Apply the fun font globally */
+        body {
+            font-family: 'Bangers', cursive;
+        }
+
+        /* Custom text shadow for that dramatic 90s cartoon look */
+        .funny-shadow {
+            text-shadow: 6px 6px 0px #F59E0B, 
+                         12px 12px 0px #DC2626; /* Yellow shadow, Red outline shadow */
+        }
+        
+        /* Optional: Add a subtle animation to make it draw attention */
+        @keyframes pulse-pop {
+            0% { transform: scale(1) rotate(-5deg); }
+            50% { transform: scale(1.05) rotate(0deg); }
+            100% { transform: scale(1) rotate(-5deg); }
+        }
+        .animate-pop {
+            animation: pulse-pop 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-lime-200 flex items-center justify-center p-4">
+
+    <div class="p-10 bg-white border-8 border-indigo-600 shadow-2xl rounded-3xl">
+        <h1 class="text-9xl text-green-700 uppercase leading-none text-center
+                   transform -rotate-6 animate-pop funny-shadow tracking-widest">
+            Jake id-DUN
+        </h1>
+    </div>
+
+</body>
+</html>
