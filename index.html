@@ -285,9 +285,9 @@
 
                 authControls.innerHTML = `
                     <div class="flex items-center space-x-3">
-                        <div class="relative group">
-                            <img src="${profilePic}" onerror="this.onerror=null; this.src='https://placehold.co/32x32/059669/ffffff?text=U';" class="w-8 h-8 rounded-full border-2 border-teal-500 cursor-pointer" title="${statusText}">
-                            <div class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl p-4 hidden group-hover:block z-50 border border-gray-100">
+                        <div class="relative profile-container">
+                            <img src="${profilePic}" onerror="this.onerror=null; this.src='https://placehold.co/32x32/059669/ffffff?text=U';" class="w-8 h-8 rounded-full border-2 border-teal-500 cursor-pointer" title="${statusText}" onclick="toggleProfileDropdown('${user.uid}')">
+                            <div id="profile-dropdown-${user.uid}" class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl p-4 hidden z-50 border border-gray-100">
                                 <p class="text-sm font-semibold text-gray-800">${displayName}</p>
                                 <p class="text-xs text-gray-500 break-all">${user.email || 'No email (Anonymous/Guest)'}</p>
                                 <p class="text-xs text-gray-500 mt-1">UID: <span class="font-mono text-gray-600">${user.uid}</span></p>
@@ -311,6 +311,23 @@
                 `;
             }
         }
+
+        // Toggle profile dropdown for a given user id
+        window.toggleProfileDropdown = (uid) => {
+            const el = document.getElementById(`profile-dropdown-${uid}`);
+            if (!el) return;
+            // hide any other open dropdowns first
+            document.querySelectorAll('[id^="profile-dropdown-"]').forEach(d => {
+                if (d.id !== el.id) d.classList.add('hidden');
+            });
+            el.classList.toggle('hidden');
+        };
+
+        // Close dropdowns when clicking outside profile area
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.profile-container')) return; // clicked inside profile area
+            document.querySelectorAll('[id^="profile-dropdown-"]').forEach(d => d.classList.add('hidden'));
+        });
 
         onAuthStateChanged(auth, async (user) => {
             document.getElementById('loading').classList.add('hidden');
@@ -498,7 +515,7 @@
                             <button onclick="openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', '${note.content.replace(/'/g, "\\'")}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0, 16) : ''}')" 
                                 class="text-teal-500 hover:text-teal-700 p-1 rounded-full hover:bg-teal-50 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
                                 </svg>
                             </button>
                             <button onclick="deleteNote('${note.id}')" 
