@@ -245,7 +245,7 @@
         <header class="flex justify-between items-center py-4 border-b border-gray-200 mb-6">
             <div class="flex items-center space-x-4">
                 <h1 class="text-3xl font-extrabold text-teal-600">Task Manager</h1>
-                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.3</span>
+                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.4</span>
             </div>
             <div id="auth-controls" class="flex items-center space-x-3">
                 <!-- User Info Placeholder -->
@@ -783,8 +783,19 @@
 
             notes.forEach(note => {
                 const isCompleted = !!note.isCompleted;
-                const deadlineDate = note.deadline ? new Date(note.deadline.toMillis()).toLocaleString() : 'No Deadline';
-                
+
+                // Format deadline as dd/mm/yyyy and show time HH:MM if present
+                let deadlineDate = 'No Deadline';
+                if (note.deadline) {
+                    const dt = note.deadline.toDate();
+                    const dd = String(dt.getDate()).padStart(2, '0');
+                    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+                    const yyyy = dt.getFullYear();
+                    const hh = String(dt.getHours()).padStart(2, '0');
+                    const min = String(dt.getMinutes()).padStart(2, '0');
+                    deadlineDate = `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+                }
+
                 const cardClasses = isCompleted 
                     ? 'bg-gray-50 border-gray-200 opacity-60' 
                     : 'bg-white border-teal-100 hover:shadow-xl';
