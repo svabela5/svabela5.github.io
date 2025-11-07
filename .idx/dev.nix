@@ -5,6 +5,8 @@
   # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.busybox
+    pkgs.android-studio
+    pkgs.jdk
   ];
 
   # Sets environment variables in the workspace
