@@ -245,7 +245,8 @@
         <header class="flex justify-between items-center py-4 border-b border-gray-200 mb-6">
             <div class="flex items-center space-x-4">
                 <h1 class="text-3xl font-extrabold text-teal-600">Task Manager</h1>
-                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.5</span>
+                <!-- Version Number -->
+                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.6</span>
             </div>
             <div id="auth-controls" class="flex items-center space-x-3">
                 <!-- User Info Placeholder -->
@@ -712,23 +713,35 @@
                     notes.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Client-side sort: Uncompleted tasks first, then by earliest deadline, then by creation time.
+                // Client-side sort:
+                // 1) Uncompleted tasks first
+                // 2) For uncompleted tasks: earliest deadline first, then newest timestamp
+                // 3) For completed tasks: most recently completed first (completedAt descending), then fallback to timestamp
                 notes.sort((a, b) => {
                     // 1. Sort by completion status (false comes before true)
                     if (a.isCompleted !== b.isCompleted) {
                         return (a.isCompleted ? 1 : -1);
                     }
-                    
-                    // 2. Sort by deadline (closest deadline first for uncompleted tasks)
-                    const deadlineA = a.deadline ? a.deadline.toMillis() : Infinity;
-                    const deadlineB = b.deadline ? b.deadline.toMillis() : Infinity;
+
+                    // Both completed -> sort by completedAt (most recent first)
+                    if (a.isCompleted && b.isCompleted) {
+                        const compA = a.completedAt ? (typeof a.completedAt.toMillis === 'function' ? a.completedAt.toMillis() : new Date(a.completedAt).getTime()) : 0;
+                        const compB = b.completedAt ? (typeof b.completedAt.toMillis === 'function' ? b.completedAt.toMillis() : new Date(b.completedAt).getTime()) : 0;
+                        if (compA !== compB) {
+                            return compB - compA; // newest completed first
+                        }
+                        // fallback to timestamp if completedAt is equal/missing
+                    }
+
+                    // For uncompleted (or fallback), sort by deadline then timestamp
+                    const deadlineA = a.deadline ? (typeof a.deadline.toMillis === 'function' ? a.deadline.toMillis() : new Date(a.deadline).getTime()) : Infinity;
+                    const deadlineB = b.deadline ? (typeof b.deadline.toMillis === 'function' ? b.deadline.toMillis() : new Date(b.deadline).getTime()) : Infinity;
                     if (deadlineA !== deadlineB) {
                         return deadlineA - deadlineB;
                     }
 
-                    // 3. Fallback to timestamp (newest first)
-                    const timeA = a.timestamp?.toMillis() || 0;
-                    const timeB = b.timestamp?.toMillis() || 0;
+                    const timeA = a.timestamp ? (typeof a.timestamp.toMillis === 'function' ? a.timestamp.toMillis() : new Date(a.timestamp).getTime()) : 0;
+                    const timeB = b.timestamp ? (typeof b.timestamp.toMillis === 'function' ? b.timestamp.toMillis() : new Date(b.timestamp).getTime()) : 0;
                     return timeB - timeA;
                 });
                 
@@ -955,8 +968,12 @@
             if (!userId) return;
             try {
                 const noteRef = doc(db, getNotesPath(userId), noteId);
-                // Update only the completion status
-                await updateDoc(noteRef, { isCompleted: isCompleted });
+                // Update completion status and set/clear completedAt timestamp
+                if (isCompleted) {
+                    await updateDoc(noteRef, { isCompleted: true, completedAt: serverTimestamp() });
+                } else {
+                    await updateDoc(noteRef, { isCompleted: false, completedAt: null });
+                }
             } catch (error) {
                 console.error("Error toggling completion:", error);
                 showMessage("Update Error", `Failed to update task status: ${error.message}`);
