@@ -246,7 +246,7 @@
             <div class="flex items-center space-x-4">
                 <h1 class="text-3xl font-extrabold text-teal-600">Task Manager</h1>
                 <!-- Version Number -->
-                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.6</span>
+                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.7</span>
             </div>
             <div id="auth-controls" class="flex items-center space-x-3">
                 <!-- User Info Placeholder -->
@@ -361,6 +361,44 @@
                     <div class="flex justify-end space-x-3">
                         <button type="button" onclick="closeNoteModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-150">Cancel</button>
                         <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-md transition duration-150">Save Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Details Modal (read-only, same layout as Create/Edit) -->
+    <div id="view-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4 z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="p-6">
+                <h3 id="view-modal-title" class="text-xl font-semibold text-gray-900 mb-4">Task Details</h3>
+
+                <form id="view-form" onsubmit="return false;">
+                    <input type="hidden" id="view-note-id">
+
+                    <div class="mb-4">
+                        <label for="view-note-title" class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
+                        <input type="text" id="view-note-title" placeholder="No title" class="w-full border-gray-300 rounded-lg p-3 border bg-transparent" readonly disabled>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="view-note-content" class="block text-sm font-medium text-gray-700 mb-1">Details</label>
+                        <textarea id="view-note-content" rows="4" placeholder="No details provided." class="w-full border-gray-300 rounded-lg p-3 border bg-transparent" readonly disabled></textarea>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                        <div class="flex space-x-3">
+                            <input type="date" id="view-note-deadline-date" class="w-1/2 border-gray-300 rounded-lg p-3 border bg-transparent" readonly disabled />
+                            <input type="time" id="view-note-deadline-time" class="w-1/2 border-gray-300 rounded-lg p-3 border bg-transparent" readonly disabled />
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">This view is read-only. Use Edit to modify the task.</p>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button id="view-edit-btn" type="button" class="px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-md transition duration-150">Edit</button>
+                        <button id="view-delete-btn" type="button" class="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg shadow-md transition duration-150">Delete</button>
+                        <button type="button" onclick="closeViewModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition duration-150">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -834,6 +872,10 @@
             const createCard = (note) => {
                 const isCompleted = !!note.isCompleted;
 
+                // Prepare safe strings for use inside onclick attribute values
+                const safeTitleAttr = (note.title || '').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+                const safeContentAttr = (note.content || '').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+
                 // Format deadline as dd/mm/yyyy and show time HH:MM if present
                 let deadlineDate = 'No Deadline';
                 if (note.deadline) {
@@ -878,7 +920,15 @@
                             </div>
                         ` : ''}
                         <div class="flex justify-end space-x-2 mt-2">
-                            <button onclick="openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', '${(note.content||'').replace(/'/g, "\\'")}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : ''}', '${note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : ''}')" 
+                            <!-- View details button (opens details modal) -->
+                            <button onclick="openViewModal('${note.id}', '${safeTitleAttr}', '${safeContentAttr}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : ''}', '${note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : ''}')" 
+                                class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-50 transition" title="View details">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                            <button onclick="openNoteModal('${note.id}', '${safeTitleAttr}', '${safeContentAttr}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : ''}', '${note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : ''}')" 
                                 class="text-teal-500 hover:text-teal-700 p-1 rounded-full hover:bg-teal-50 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
@@ -887,16 +937,24 @@
                             <button onclick="deleteNote('${note.id}')" 
                                 class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79M6.57 3.24c.342.052.682.107 1.022.166m-1.022-.166L7.84 21.673a2.25 2.25 0 002.244 2.077h4.056a2.25 2.25 0 002.244-2.077L19.26 3.79M6.57 3.24c.342.052.682.107 1.022.166M8.25 6.75h9.75" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79M6.57 3.24c.342.052.682.107 1.022.166m-1.022-.166L7.84 21.673a2.25 2.25 0 002.244 2.077h4.056a2.25 2.25 0 002.244-2.077L19.26 3.79M6.57 3.24c.342.052.682.107 1.022.166M8.25 6.75h9.75" />
                                 </svg>
                             </button>
                         </div>
                     </div>
                 `;
 
+                // Open view modal when clicking the card itself (but ignore clicks on buttons/checkbox)
+                noteCard.addEventListener('click', (e) => {
+                    if (e.target.closest('button') || e.target.closest('input[type="checkbox"]')) return;
+                    const dateStr = note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : '';
+                    const timeStr = note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : '';
+                    openViewModal(note.id, note.title || '', note.content || '', dateStr, timeStr);
+                });
+
                 return noteCard;
             };
-
+ 
             // render pending tasks first
             pending.forEach(n => pendingContainer.appendChild(createCard(n)));
 
@@ -1021,6 +1079,60 @@
             // ensure date/time inputs cleared too
             if (document.getElementById('note-deadline-date')) document.getElementById('note-deadline-date').value = '';
             if (document.getElementById('note-deadline-time')) document.getElementById('note-deadline-time').value = '';
+        };
+
+        // View modal helpers (populate read-only inputs; Edit opens editable modal)
+        window.openViewModal = (id = '', title = '', content = '', dateStr = '', timeStr = '') => {
+            // set hidden id for reference
+            document.getElementById('view-note-id').value = id || '';
+
+            document.getElementById('view-modal-title').textContent = title || 'Task Details';
+            document.getElementById('view-note-title').value = title || '';
+            document.getElementById('view-note-content').value = content || '';
+            document.getElementById('view-note-deadline-date').value = dateStr || '';
+            document.getElementById('view-note-deadline-time').value = timeStr || '';
+
+            // Configure Edit button: close view modal then open edit modal with same data
+            const editBtn = document.getElementById('view-edit-btn');
+            editBtn.onclick = () => {
+                closeViewModal();
+                // open editable modal with same values
+                openNoteModal(id, title, content, dateStr, timeStr);
+            };
+
+            // Configure Delete button: confirm, delete then close view modal
+            const deleteBtn = document.getElementById('view-delete-btn');
+            deleteBtn.onclick = async () => {
+                if (!id) {
+                    showMessage("Error", "Cannot delete: missing task id.");
+                    return;
+                }
+                // optional confirm
+                const ok = confirm("Delete this task? This action cannot be undone.");
+                if (!ok) return;
+                await deleteNote(id);
+                closeViewModal();
+            };
+
+            document.getElementById('view-modal').classList.remove('hidden');
+        };
+
+        window.closeViewModal = () => {
+            const vm = document.getElementById('view-modal');
+            if (vm) vm.classList.add('hidden');
+
+            // clear values
+            const fields = ['view-note-id','view-note-title','view-note-content','view-note-deadline-date','view-note-deadline-time'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            // remove handlers to avoid stale closures
+            const editBtn = document.getElementById('view-edit-btn');
+            const deleteBtn = document.getElementById('view-delete-btn');
+            if (editBtn) editBtn.onclick = null;
+            if (deleteBtn) deleteBtn.onclick = null;
         };
 
         // Toggle collapse/show for pending/completed sections
