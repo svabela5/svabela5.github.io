@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Manager</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Set favicon to the edit (pencil) SVG used in the UI -->
+
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
     <script>
         (function(){
             const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9' /></svg>`;
@@ -20,7 +22,6 @@
             link.href = href;
         })();
     </script>
-    <!-- Use Inter font family -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
 
@@ -82,7 +83,7 @@
         .dark .bg-gray-100 { background-color: rgba(255,255,255,0.02) !important; }
         .bg-gray-100 { background-color: #f3f4f6 !important; }
 
-        /* Keep the original task-content overflow clamp */
+        /* Keep the original task-content overflow clamp for truncation on cards */
         .task-content {
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -102,7 +103,9 @@
         #note-modal .bg-white,
         #message-modal .bg-white,
         #note-modal > div > .bg-white,
-        #message-modal > div > .bg-white {
+        #message-modal > div > .bg-white,
+        #view-modal .bg-white,
+        #view-modal > div > .bg-white {
             background-color: var(--card-bg) !important;
             color: var(--fg) !important;
         }
@@ -111,6 +114,9 @@
         #note-modal h3,
         #note-modal label,
         #note-modal p,
+        #view-modal h3,
+        #view-modal label,
+        #view-modal p,
         #message-modal h3,
         #message-modal p {
             color: var(--fg) !important;
@@ -120,6 +126,9 @@
         #note-modal input,
         #note-modal textarea,
         #note-modal select,
+        #view-modal input,
+        #view-modal textarea,
+        #view-modal select,
         #message-modal input,
         #message-modal textarea,
         #message-modal select {
@@ -130,6 +139,7 @@
 
         /* Make the visible input backgrounds match card background for contrast */
         #note-modal .border,
+        #view-modal .border,
         #message-modal .border {
             background-color: var(--card-bg) !important;
         }
@@ -139,6 +149,10 @@
         #note-modal textarea.border,
         #note-modal input[type="datetime-local"],
         #note-modal .rounded-lg,
+        #view-modal input.border,
+        #view-modal textarea.border,
+        #view-modal input[type="datetime-local"],
+        #view-modal .rounded-lg,
         #message-modal input.border,
         #message-modal textarea.border {
             border: 1px solid var(--input-border) !important;
@@ -165,13 +179,75 @@
 
         /* Small utility text inside modal uses muted color */
         #note-modal .text-sm,
+        #view-modal .text-sm,
         #message-modal .text-sm {
             color: var(--muted) !important;
         }
 
         /* ---------------------------
-           Modal buttons — improve contrast
+           Quill / Rich Text Editor Styles
            --------------------------- */
+
+        /* Quill Editor toolbar (top) */
+        #note-modal .ql-toolbar.ql-snow {
+            border-top-left-radius: 0.5rem; /* rounded-lg */
+            border-top-right-radius: 0.5rem; /* rounded-lg */
+            background-color: var(--bg); /* Match page/modal color for contrast */
+            border-color: var(--input-border) !important;
+        }
+
+        /* Quill Editor content container (bottom) */
+        #note-modal .ql-container.ql-snow {
+            border-bottom-left-radius: 0.5rem; /* rounded-lg */
+            border-bottom-right-radius: 0.5rem; /* rounded-lg */
+            height: 180px; /* Enforce a height for the editor area */
+            border-color: var(--input-border) !important;
+            /* Match background to card for contrast */
+            background-color: var(--card-bg) !important; 
+            overflow-y: auto; /* Ensure the container itself scrolls if needed (for small screens) */
+        }
+        
+        /* Quill Editor text area */
+        #note-modal .ql-editor {
+            color: var(--fg) !important; 
+            /* Enforce vertical scrolling for the content inside the Quill editor */
+            overflow-y: auto !important; 
+            padding: 1rem !important;
+            min-height: 100%;
+        }
+
+        /* Read-only view modal content area with scrolling */
+        #view-modal #view-note-content-display {
+            border: 1px solid var(--input-border) !important;
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1rem;
+            min-height: 100px;
+            max-height: 250px; /* Limit height for scrolling */
+            overflow-y: auto; /* Enable scrolling for view modal details */
+            background-color: var(--card-bg) !important;
+            color: var(--fg) !important;
+        }
+        
+        /* Dark mode adjustments for Quill/Rich Text */
+        .dark #note-modal .ql-toolbar.ql-snow {
+            border-color: var(--card-border-dark) !important;
+            background-color: var(--card-bg) !important;
+        }
+        .dark #note-modal .ql-container.ql-snow {
+            border-color: var(--card-border-dark) !important;
+            background-color: var(--card-bg) !important;
+        }
+        .dark #note-modal .ql-snow .ql-stroke {
+            stroke: var(--fg);
+        }
+        .dark #note-modal .ql-snow .ql-fill {
+            fill: var(--fg);
+        }
+        .dark #note-modal .ql-snow .ql-picker-label {
+            color: var(--fg) !important;
+        }
+
+        /* --------------------------- Modal buttons — improve contrast --------------------------- */
 
         /* Primary action buttons (Save / OK) */
         #note-modal button[type="submit"],
@@ -225,12 +301,13 @@
         }
 
         /* Make sure modal close / overlay text remains readable */
-        #note-modal, #message-modal {
+        #note-modal, #view-modal, #message-modal {
             color: var(--fg) !important;
         }
 
         /* Ensure .text-white used inside buttons remains readable in dark mode (keeps white) */
         .dark #note-modal .text-white,
+        .dark #view-modal .text-white,
         .dark #message-modal .text-white {
             color: #fff !important;
         }
@@ -238,22 +315,18 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Main Application Container -->
     <div id="app" class="flex-grow max-w-4xl mx-auto w-full p-4 sm:p-6 lg:p-8">
         
-        <!-- Header -->
         <header class="flex justify-between items-center py-4 border-b border-gray-200 mb-6">
             <div class="flex items-center space-x-4">
                 <h1 class="text-3xl font-extrabold text-teal-600">Task Manager</h1>
-                <!-- Version Number -->
-                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.7</span>
+                <!-- Version number is here svengoranabela -->
+                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.8</span>
             </div>
             <div id="auth-controls" class="flex items-center space-x-3">
-                <!-- User Info Placeholder -->
-            </div>
+                </div>
         </header>
 
-        <!-- Loading State -->
         <div id="loading" class="flex flex-col items-center justify-center py-20 text-gray-500">
             <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -262,10 +335,8 @@
             <p class="mt-4 text-lg">Initializing Firebase...</p>
         </div>
 
-        <!-- Main Content Area -->
         <main id="main-content" class="hidden">
             
-            <!-- Auth Wall (Sign In Prompt) -->
             <div id="auth-wall" class="hidden flex flex-col items-center justify-center text-center py-20 bg-white rounded-xl shadow-lg border border-gray-100">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-teal-500 mb-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
@@ -279,7 +350,6 @@
                 <a id="anonymous-sign-in-link" href="#" class="mt-4 text-sm text-gray-500 hover:text-teal-600 underline">Continue as Guest (Tasks will NOT be cross-device compatible)</a>
             </div>
 
-            <!-- Tasks Interface (Visible when signed in) -->
             <div id="notes-interface" class="hidden">
                 
                 <div class="flex justify-between items-center mb-6">
@@ -292,19 +362,15 @@
                     </button>
                 </div>
                 
-                <!-- Pending Section Header -->
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-semibold text-gray-700">Pending Tasks <span id="pending-count" class="text-sm text-gray-500 ml-2"></span></h3>
                     <button id="toggle-pending-btn" onclick="toggleSection('pending')" class="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 transition">Hide</button>
                 </div>
 
-                <!-- Pending Section Content (collapsible) -->
                 <div id="pending-content" class="mb-6">
                     <div id="notes-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <!-- Pending (not completed) tasks will be inserted here by JavaScript -->
-                    </div>
+                        </div>
 
-                    <!-- Empty State (shows when there are no pending tasks) -->
                     <div id="empty-state" class="hidden text-center py-16 bg-white rounded-xl shadow-inner mt-8">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400 mx-auto mb-3">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.239 12.378h6.104M14.73 17.039h6.104m.024 4.091h-6.104M8.625 10.5h.008M21 16.5a2.25 2.25 0 01-2.25 2.25H9.75A2.25 2.25 0 017.5 16.5v-6A2.25 2.25 0 019.75 8.25h10.5A2.25 2.25 0 0122.5 10.5v6" />
@@ -313,21 +379,17 @@
                     </div>
                 </div>
 
-                <!-- Separator -->
                 <br />
                 <hr class="border-gray-200 dark:border-gray-700 my-6" />
 
-                <!-- Completed Section Header -->
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-semibold text-gray-700">Completed Tasks <span id="completed-count" class="text-sm text-gray-500 ml-2"></span></h3>
                     <button id="toggle-completed-btn" onclick="toggleSection('completed')" class="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 transition">Hide</button>
                 </div>
 
-                <!-- Completed Section Content (collapsible) -->
                 <div id="completed-content" class="mt-4">
                     <div id="completed-list" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <!-- Completed tasks will be inserted here by JavaScript -->
-                    </div>
+                        </div>
                 </div>
 
             </div>
@@ -335,7 +397,6 @@
         </main>
     </div>
 
-    <!-- Task Modal (New/Edit Task) -->
     <div id="note-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
             <div class="p-6">
@@ -347,8 +408,33 @@
                         <input type="text" id="note-title" placeholder="What needs to be done?" class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border" required>
                     </div>
                     <div class="mb-4">
-                        <label for="note-content" class="block text-sm font-medium text-gray-700 mb-1">Details (Optional)</label>
-                        <textarea id="note-content" rows="3" placeholder="Add any details or subtasks..." class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-lg p-3 border"></textarea>
+                        <label for="note-content-container" class="block text-sm font-medium text-gray-700 mb-1">Details (Optional)</label>
+                        <div id="note-content-toolbar" class="bg-gray-50 rounded-t-lg border-b border-gray-300">
+                            <span class="ql-formats">
+                                <button class="ql-bold"></button>
+                                <button class="ql-italic"></button>
+                                <button class="ql-underline"></button>
+                                <button class="ql-strike"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered"></button>
+                                <button class="ql-list" value="bullet"></button>
+                                <button class="ql-indent" value="-1"></button>
+                                <button class="ql-indent" value="+1"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <select class="ql-header">
+                                    <option value="1"></option>
+                                    <option value="2"></option>
+                                    <option selected></option>
+                                </select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-link"></button>
+                                <button class="ql-clean"></button>
+                            </span>
+                        </div>
+                        <div id="note-content-container" class="w-full border-gray-300 focus:ring-teal-500 focus:border-teal-500 rounded-b-lg border-x border-b"></div>
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Deadline (Optional)</label>
@@ -367,7 +453,6 @@
         </div>
     </div>
 
-    <!-- View Details Modal (read-only, same layout as Create/Edit) -->
     <div id="view-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
             <div class="p-6">
@@ -382,9 +467,9 @@
                     </div>
 
                     <div class="mb-4">
-                        <label for="view-note-content" class="block text-sm font-medium text-gray-700 mb-1">Details</label>
-                        <textarea id="view-note-content" rows="4" placeholder="No details provided." class="w-full border-gray-300 rounded-lg p-3 border bg-transparent" readonly disabled></textarea>
-                    </div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Details</label>
+                        <div id="view-note-content-display" class="text-gray-700">No details provided.</div>
+                        </div>
 
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
@@ -405,7 +490,6 @@
         </div>
     </div>
 
-    <!-- Custom Message Modal -->
     <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 hidden flex items-center justify-center p-4 z-50 transition-opacity duration-300">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
             <div class="p-6">
@@ -419,7 +503,6 @@
     </div>
 
 
-    <!-- Firebase SDK Imports and App Logic -->
     <script type="module">
         // Global variables provided by the Canvas environment
         const APP_VERSION = '1.1';
@@ -468,6 +551,7 @@
         let userId = null;
         let unsubscribeNotes = null;
         let countdownInterval = null; // Global variable for the countdown timer
+        let noteQuill = null; // Global Quill instance
 
         if (firebaseConfig) {
             app = initializeApp(firebaseConfig);
@@ -503,7 +587,9 @@
             document.getElementById('message-modal').classList.add('hidden');
         };
 
+
         // --- THEME UTILITIES ---
+
         function isDarkMode() {
             return document.documentElement.classList.contains('dark');
         }
@@ -538,7 +624,7 @@
                 }
                 return;
             }
-
+            
             // Otherwise toggle
             if (isDarkMode()) {
                 document.documentElement.classList.remove('dark');
@@ -552,7 +638,9 @@
         // Apply theme as early as possible
         applySavedTheme();
 
+
         // --- AUTHENTICATION FUNCTIONS ---
+
         window.googleSignIn = async () => {
             if (!auth) return;
             const provider = new GoogleAuthProvider();
@@ -594,6 +682,7 @@
             }
         }
 
+
         // --- UI RENDERING & AUTH STATE MANAGEMENT ---
 
         /**
@@ -603,13 +692,13 @@
         function renderHeader(user) {
             const authControls = document.getElementById('auth-controls');
             authControls.innerHTML = '';
-            
+
             if (user) {
                 const isGoogleUser = user.providerData.some(p => p.providerId === 'google.com');
                 const isAnonymous = user.isAnonymous;
                 const displayName = user.displayName || (isAnonymous ? 'Guest User' : 'User');
                 const profilePic = user.photoURL || `https://placehold.co/32x32/059669/ffffff?text=${displayName[0] || '?'}`;
-
+                
                 let statusText = '';
                 if (isGoogleUser) {
                     statusText = `Signed in as ${displayName}`;
@@ -618,7 +707,8 @@
                 }
 
                 // Determine initial checked state for theme toggle
-                const themeChecked = localStorage.getItem('theme') === 'dark' || (localStorage.getItem('theme') === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                const themeChecked = localStorage.getItem('theme') === 'dark' || 
+                                     (localStorage.getItem('theme') === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
                 authControls.innerHTML = `
                     <div class="flex items-center space-x-3">
@@ -628,8 +718,6 @@
                                 <p class="text-sm font-semibold text-gray-800">${displayName}</p>
                                 <p class="text-xs text-gray-500 break-all">${user.email || 'No email (Anonymous/Guest)'}</p>
                                 <p class="text-xs text-gray-500 mt-1">UID: <span class="font-mono text-gray-600">${user.uid}</span></p>
-
-                                <!-- Theme switch (visual switch with knob) -->
                                 <div class="mt-3 flex items-center justify-between">
                                     <div>
                                         <p class="text-sm font-medium text-gray-700">Theme</p>
@@ -638,436 +726,234 @@
                                     <div class="ml-4">
                                         <label class="relative inline-flex items-center cursor-pointer">
                                             <input id="theme-toggle-${user.uid}" type="checkbox" ${themeChecked ? 'checked' : ''} class="sr-only peer" onchange="toggleTheme(event)">
-                                            <!-- track -->
-                                            <span class="w-11 h-6 bg-gray-200 rounded-full peer-focus:ring-2 peer-focus:ring-teal-300 dark:bg-gray-700 peer-checked:bg-teal-600 transition-colors"></span>
-                                            <!-- knob -->
-                                            <span class="absolute left-0 top-0 mt-0.5 ml-0.5 bg-white dark:bg-gray-800 w-5 h-5 rounded-full shadow transform transition-transform peer-checked:translate-x-5"></span>
-                                            <!-- label text -->
-                                            <span id="theme-label-${user.uid}" class="ml-14 text-sm font-medium text-gray-700">${themeChecked ? 'Dark' : 'Light'}</span>
+                                            <span class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-teal-600"></span>
                                         </label>
                                     </div>
                                 </div>
-
-                                <button onclick="signOutUser()" class="mt-3 w-full text-sm text-center text-white bg-red-500 hover:bg-red-600 py-1.5 rounded-lg transition">Sign Out</button>
+                                <button onclick="signOutUser()" class="w-full text-sm mt-4 px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition duration-150">
+                                    Sign Out
+                                </button>
                             </div>
                         </div>
                     </div>
                 `;
-
-                // Ensure the dropdown's toggle label reflects current theme when opened
-                setTimeout(() => {
-                    const toggle = document.getElementById(`theme-toggle-${user.uid}`);
-                    const label = document.getElementById(`theme-label-${user.uid}`);
-                    if (toggle) {
-                        if (label) label.textContent = toggle.checked ? 'Dark' : 'Light';
-                        toggle.addEventListener('change', () => {
-                            if (label) label.textContent = toggle.checked ? 'Dark' : 'Light';
-                        });
-                    }
-                }, 50);
-
-                document.getElementById('auth-wall').classList.add('hidden');
-                document.getElementById('notes-interface').classList.remove('hidden');
-
             } else {
-                document.getElementById('auth-wall').classList.remove('hidden');
-                document.getElementById('notes-interface').classList.add('hidden');
-                
-                authControls.innerHTML = `
-                    <button onclick="googleSignIn()" class="bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-full shadow-md transition duration-200">
-                        Sign In
-                    </button>
-                `;
+                authControls.innerHTML = ''; // Clear controls if signed out (auth-wall handles login)
             }
         }
 
-        // Toggle profile dropdown for a given user id
         window.toggleProfileDropdown = (uid) => {
-            const el = document.getElementById(`profile-dropdown-${uid}`);
-            if (!el) return;
-            // hide any other open dropdowns first
-            document.querySelectorAll('[id^="profile-dropdown-"]').forEach(d => {
-                if (d.id !== el.id) d.classList.add('hidden');
-            });
-            el.classList.toggle('hidden');
-        };
+            const dropdown = document.getElementById(`profile-dropdown-${uid}`);
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
+        }
 
-        // Close dropdowns when clicking outside profile area
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.profile-container')) return; // clicked inside profile area
-            document.querySelectorAll('[id^="profile-dropdown-"]').forEach(d => d.classList.add('hidden'));
-        });
 
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, (user) => {
             document.getElementById('loading').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
 
             if (user) {
                 userId = user.uid;
+                document.getElementById('auth-wall').classList.add('hidden');
+                document.getElementById('notes-interface').classList.remove('hidden');
+                
                 renderHeader(user);
-                
-                if (initialAuthToken && user.isAnonymous) {
-                    try {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } catch (e) {
-                        console.warn("Failed to sign in with custom token. Continuing anonymously.", e);
-                    }
-                }
-                
-                startNotesListener(userId);
-
+                startNotesListener();
             } else {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken).catch(async (error) => {
-                        console.warn("Custom token failed. Signing in anonymously.", error);
-                        await signInAnonymously(auth);
-                    });
-                } else {
-                    userId = null;
-                    renderHeader(null);
-                    document.getElementById('notes-list').innerHTML = '';
-                    if (countdownInterval) clearInterval(countdownInterval);
-                }
+                userId = null;
+                document.getElementById('auth-wall').classList.remove('hidden');
+                document.getElementById('notes-interface').classList.add('hidden');
+                
+                renderHeader(null);
+                
+                // Set up anonymous sign-in listener if it hasn't been done
+                const anonLink = document.getElementById('anonymous-sign-in-link');
+                if (anonLink) anonLink.addEventListener('click', anonymousSignIn);
             }
         });
 
-        // --- FIRESTORE TASKS LOGIC (CRUD) ---
+
+        // --- FIRESTORE CRUD & LISTENER ---
 
         /**
-         * Attaches the real-time listener for the user's tasks.
+         * Creates the HTML structure for a single task card.
+         * @param {Object} note - The task object from Firestore.
+         * @returns {string} The HTML string for the card.
          */
-        function startNotesListener(uid) {
-            if (unsubscribeNotes) {
-                unsubscribeNotes(); 
-            }
+        function createCard(note) {
+            const isCompleted = note.completed || false;
+            const cardClasses = isCompleted 
+                ? 'bg-gray-50 border-gray-200 dark:bg-gray-700 dark:border-gray-700 opacity-70' 
+                : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:shadow-lg transition-shadow';
+            const titleClasses = isCompleted ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-100';
+            const contentClasses = isCompleted ? 'line-through text-gray-500' : 'text-gray-600 dark:text-gray-400';
             
-            const notesRef = collection(db, getNotesPath(uid));
-            // Query with no orderBy to avoid needing indexes, we sort client-side.
-            const q = query(notesRef); 
+            // Format deadline date/time
+            const deadline = note.deadline ? note.deadline.toDate() : null;
+            const timeDiff = deadline ? deadline.getTime() - new Date().getTime() : 0;
+            const isOverdue = !isCompleted && timeDiff < 0;
 
-            unsubscribeNotes = onSnapshot(q, (snapshot) => {
-                const notes = [];
-                snapshot.forEach((doc) => {
-                    notes.push({ id: doc.id, ...doc.data() });
-                });
+            let deadlineText = '';
+            let deadlineClasses = 'text-sm font-medium';
 
-                // Client-side sort:
-                // 1) Uncompleted tasks first
-                // 2) For uncompleted tasks: earliest deadline first, then newest timestamp
-                // 3) For completed tasks: most recently completed first (completedAt descending), then fallback to timestamp
-                notes.sort((a, b) => {
-                    // 1. Sort by completion status (false comes before true)
-                    if (a.isCompleted !== b.isCompleted) {
-                        return (a.isCompleted ? 1 : -1);
-                    }
+            if (deadline) {
+                const datePart = deadline.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                const timePart = note.deadlineTime || deadline.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
-                    // Both completed -> sort by completedAt (most recent first)
-                    if (a.isCompleted && b.isCompleted) {
-                        const compA = a.completedAt ? (typeof a.completedAt.toMillis === 'function' ? a.completedAt.toMillis() : new Date(a.completedAt).getTime()) : 0;
-                        const compB = b.completedAt ? (typeof b.completedAt.toMillis === 'function' ? b.completedAt.toMillis() : new Date(b.completedAt).getTime()) : 0;
-                        if (compA !== compB) {
-                            return compB - compA; // newest completed first
-                        }
-                        // fallback to timestamp if completedAt is equal/missing
-                    }
+                if (isOverdue) {
+                    deadlineText = 'OVERDUE';
+                    deadlineClasses += ' text-red-500 dark:text-red-400';
+                } else {
+                    deadlineText = `${datePart} ${timePart}`;
+                    deadlineClasses += ' text-teal-600 dark:text-teal-400';
+                }
+            } else {
+                deadlineText = 'No Deadline';
+                deadlineClasses += ' text-gray-400 dark:text-gray-600';
+            }
 
-                    // For uncompleted (or fallback), sort by deadline then timestamp
-                    const deadlineA = a.deadline ? (typeof a.deadline.toMillis === 'function' ? a.deadline.toMillis() : new Date(a.deadline).getTime()) : Infinity;
-                    const deadlineB = b.deadline ? (typeof b.deadline.toMillis === 'function' ? b.deadline.toMillis() : new Date(b.deadline).getTime()) : Infinity;
-                    if (deadlineA !== deadlineB) {
-                        return deadlineA - deadlineB;
-                    }
 
-                    const timeA = a.timestamp ? (typeof a.timestamp.toMillis === 'function' ? a.timestamp.toMillis() : new Date(a.timestamp).getTime()) : 0;
-                    const timeB = b.timestamp ? (typeof b.timestamp.toMillis === 'function' ? b.timestamp.toMillis() : new Date(b.timestamp).getTime()) : 0;
-                    return timeB - timeA;
-                });
-                
-                renderNotes(notes);
-                startCountdownTimer(notes);
-            }, (error) => {
-                console.error("Error fetching tasks:", error);
-                showMessage("Database Error", "Could not load your tasks. Check the console for details.");
-            });
+            // Format timestamp for display (timestamp is when the note was created/modified)
+            const createdDate = note.timestamp ? note.timestamp.toDate() : new Date();
+            const timeAgo = formatTimeAgo(createdDate);
+
+            // Pass the original date/time strings to the modals for easy pre-filling
+            const originalDateStr = note.deadlineDate || '';
+            const originalTimeStr = note.deadlineTime || '';
+
+            // Handle content for openViewModal - need to pass the full content
+            const fullContent = note.content || '';
+
+            return `
+                <div id="card-${note.id}" class="rounded-xl p-5 shadow-md border ${cardClasses}" data-id="${note.id}" 
+                     onclick="openViewModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')">
+                    
+                    <div class="flex justify-between items-start">
+                        <div class="flex-shrink-0 mr-3">
+                            <input type="checkbox" id="checkbox-${note.id}" class="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 cursor-pointer" 
+                                   ${isCompleted ? 'checked' : ''} onclick="toggleCompletion(event, '${note.id}', ${isCompleted})">
+                        </div>
+                        
+                        <div class="flex-grow min-w-0">
+                            <h3 class="text-xl font-bold mb-1 ${titleClasses}">${note.title}</h3>
+                            <div class="text-sm task-content ${contentClasses}">${note.content || 'No details provided.'}</div>
+                        </div>
+
+                        <div class="flex-shrink-0 ml-4">
+                            <button onclick="event.stopPropagation(); openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')" 
+                                    class="p-1 text-gray-400 hover:text-teal-600 rounded-full transition duration-150 ${isCompleted ? 'invisible' : ''}" 
+                                    title="Edit Task">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <span class="${deadlineClasses}">${deadlineText}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${timeAgo}</span>
+                    </div>
+
+                </div>
+            `;
         }
-        
+
         /**
-         * Real-time timer logic for the countdown.
+         * Renders the list of tasks by clearing the existing lists and appending new cards.
+         * @param {Array<Object>} notes - The array of task objects.
          */
-        function startCountdownTimer(notes) {
+        function renderNotes(notes) {
+            const pendingList = document.getElementById('notes-list');
+            const completedList = document.getElementById('completed-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            pendingList.innerHTML = '';
+            completedList.innerHTML = '';
+
+            let pendingCount = 0;
+            let completedCount = 0;
+
+            // Stop the existing countdown interval before starting a new one
             if (countdownInterval) {
                 clearInterval(countdownInterval);
             }
 
-            const uncompletedNotesWithDeadlines = notes.filter(n => !n.isCompleted && n.deadline);
-            
-            if (uncompletedNotesWithDeadlines.length === 0) {
-                return; 
-            }
-
-            countdownInterval = setInterval(() => {
-                const now = Date.now();
-                
-                uncompletedNotesWithDeadlines.forEach(note => {
-                    const countdownEl = document.getElementById(`countdown-${note.id}`);
-                    if (!countdownEl) return;
-
-                    // Get deadline time in milliseconds
-                    // note.deadline is a Firestore Timestamp object, use .toMillis()
-                    const deadlineTime = note.deadline.toMillis(); 
-                    const distance = deadlineTime - now;
-                    
-                    countdownEl.classList.remove('text-red-600', 'text-yellow-600', 'text-green-600');
-
-                    if (distance < 0) {
-                        // Deadline passed
-                        countdownEl.textContent = "DEADLINE PASSED";
-                        countdownEl.classList.add('text-red-600', 'font-bold');
-                    } else {
-                        // Time remaining calculation
-                        const totalSeconds = Math.floor(distance / 1000);
-                        const days = Math.floor(totalSeconds / (60 * 60 * 24));
-                        const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
-                        const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
-                        const seconds = totalSeconds % 60;
-
-                        countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
-                        // Color coding based on remaining time
-                        if (days < 1) {
-                            countdownEl.classList.add('text-yellow-600', 'font-semibold'); // Less than 24 hours
-                        } else {
-                            countdownEl.classList.add('text-green-600'); // More than 24 hours
-                        }
-                    }
-                });
-            }, 1000);
-        }
-
-        /**
-         * Renders the list of tasks to the UI.
-         */
-        function renderNotes(notes) {
-            const pendingContainer = document.getElementById('notes-list');
-            const completedContainer = document.getElementById('completed-list');
-            pendingContainer.innerHTML = '';
-            if (completedContainer) completedContainer.innerHTML = '';
-
-            const pending = notes.filter(n => !n.isCompleted);
-            const completed = notes.filter(n => !!n.isCompleted);
-
-            // Update counters
-            const pendingCountEl = document.getElementById('pending-count');
-            const completedCountEl = document.getElementById('completed-count');
-            if (pendingCountEl) pendingCountEl.textContent = `(${pending.length})`;
-            if (completedCountEl) completedCountEl.textContent = `(${completed.length})`;
-
-            // Show empty state only when there are no pending tasks
-            if (pending.length === 0) {
-                document.getElementById('empty-state').classList.remove('hidden');
-            } else {
-                document.getElementById('empty-state').classList.add('hidden');
-            }
-
-            const createCard = (note) => {
-                const isCompleted = !!note.isCompleted;
-
-                // Prepare safe strings for use inside onclick attribute values
-                const safeTitleAttr = (note.title || '').replace(/'/g, "\\'").replace(/\n/g, '\\n');
-                const safeContentAttr = (note.content || '').replace(/'/g, "\\'").replace(/\n/g, '\\n');
-
-                // Format deadline as dd/mm/yyyy and show time HH:MM if present
-                let deadlineDate = 'No Deadline';
-                if (note.deadline) {
-                    const dt = note.deadline.toDate();
-                    const dd = String(dt.getDate()).padStart(2, '0');
-                    const mm = String(dt.getMonth() + 1).padStart(2, '0');
-                    const yyyy = dt.getFullYear();
-                    const hh = String(dt.getHours()).padStart(2, '0');
-                    const min = String(dt.getMinutes()).padStart(2, '0');
-                    deadlineDate = `${dd}/${mm}/${yyyy} ${hh}:${min}`;
-                }
-
-                const cardClasses = isCompleted
-                    ? 'bg-gray-50 border-gray-200 opacity-60'
-                    : 'bg-white border-teal-100 hover:shadow-xl';
-
-                const titleClasses = isCompleted ? 'line-through text-gray-500' : 'text-gray-800';
-                const contentClasses = isCompleted ? 'line-through text-gray-400' : 'text-gray-600';
-
-                const noteCard = document.createElement('div');
-                noteCard.className = `rounded-xl shadow-lg transition duration-300 p-5 flex flex-col justify-between border ${cardClasses}`;
-                noteCard.innerHTML = `
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1 mr-4">
-                            <h3 class="text-xl font-bold mb-1 ${titleClasses}">${note.title}</h3>
-                            <p class="text-sm task-content ${contentClasses}">${note.content || 'No details provided.'}</p>
-                        </div>
-                        <input type="checkbox" ${isCompleted ? 'checked' : ''} 
-                            onchange="toggleCompletion('${note.id}', event.target.checked)"
-                            class="w-6 h-6 mt-1 text-teal-600 bg-gray-100 border-gray-300 rounded focus:ring-teal-500 cursor-pointer">
-                    </div>
-
-                    <div class="mt-4 pt-4 border-t border-gray-100 flex flex-col space-y-2 text-sm">
-                        <div class="flex justify-between items-center">
-                            <span class="font-medium text-gray-500">Deadline:</span>
-                            <span class="text-gray-700">${deadlineDate}</span>
-                        </div>
-                        ${note.deadline && !isCompleted ? `
-                            <div class="flex justify-between items-center font-mono">
-                                <span class="font-medium text-gray-500">Time Left:</span>
-                                <span id="countdown-${note.id}" class="text-xs font-bold">...</span>
-                            </div>
-                        ` : ''}
-                        <div class="flex justify-end space-x-2 mt-2">
-                            <!-- View details button (opens details modal) -->
-                            <button onclick="openViewModal('${note.id}', '${safeTitleAttr}', '${safeContentAttr}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : ''}', '${note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : ''}')" 
-                                class="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-50 transition" title="View details">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
-                            </button>
-                            <button onclick="openNoteModal('${note.id}', '${safeTitleAttr}', '${safeContentAttr}', '${note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : ''}', '${note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : ''}')" 
-                                class="text-teal-500 hover:text-teal-700 p-1 rounded-full hover:bg-teal-50 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
-                                </svg>
-                            </button>
-                            <button onclick="deleteNote('${note.id}')" 
-                                class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79m14.46-3.21a.75.75 0 00-1.022-.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.972a2.25 2.25 0 01-2.244-2.077L4.74 5.79M6.57 3.24c.342.052.682.107 1.022.166m-1.022-.166L7.84 21.673a2.25 2.25 0 002.244 2.077h4.056a2.25 2.25 0 002.244-2.077L19.26 3.79M6.57 3.24c.342.052.682.107 1.022.166M8.25 6.75h9.75" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                `;
-
-                // Open view modal when clicking the card itself (but ignore clicks on buttons/checkbox)
-                noteCard.addEventListener('click', (e) => {
-                    if (e.target.closest('button') || e.target.closest('input[type="checkbox"]')) return;
-                    const dateStr = note.deadline ? note.deadline.toDate().toISOString().substring(0,10) : '';
-                    const timeStr = note.deadline ? note.deadline.toDate().toTimeString().substring(0,5) : '';
-                    openViewModal(note.id, note.title || '', note.content || '', dateStr, timeStr);
-                });
-
-                return noteCard;
-            };
- 
-            // render pending tasks first
-            pending.forEach(n => pendingContainer.appendChild(createCard(n)));
-
-            // render completed tasks in the separate container below
-            completed.forEach(n => {
-                if (completedContainer) completedContainer.appendChild(createCard(n));
-            });
-        }
-
-        window.saveNote = async (event) => {
-             event.preventDefault();
-             if (!userId) {
-                 showMessage("Authentication Required", "Please sign in to save tasks.");
-                 return;
-             }
- 
-             const noteId = document.getElementById('note-id').value;
-             const title = document.getElementById('note-title').value.trim();
-             const content = document.getElementById('note-content').value.trim();
-             const deadlineDate = document.getElementById('note-deadline-date').value;
-             const deadlineTime = document.getElementById('note-deadline-time').value; // optional
- 
-             if (!title) {
-                 showMessage("Validation Error", "Task title cannot be empty.");
-                 return;
-             }
- 
-             // Create a base object
-             const noteData = {
-                 title: title,
-                 content: content,
-                 // Always update the time the task was last modified/saved
-                 timestamp: serverTimestamp() 
-             };
- 
-             // Process deadline
-            if (deadlineDate) {
-                // If time omitted, default to noon (12:00)
-                const timePart = deadlineTime && deadlineTime.length ? deadlineTime : '12:00';
-                // Build a local datetime string and convert to Date
-                const combined = `${deadlineDate}T${timePart}:00`;
-                noteData.deadline = Timestamp.fromDate(new Date(combined));
-            } else {
-                noteData.deadline = null;
-            }
- 
-             try {
-                 if (noteId) {
-                     // Update existing task
-                     const noteRef = doc(db, getNotesPath(userId), noteId);
-                     await updateDoc(noteRef, noteData);
-                     showMessage("Success", "Task updated successfully!");
-                 } else {
-                     // Add new task
-                     // Set isCompleted to false for new tasks
-                     noteData.isCompleted = false; 
-                     const notesCollectionRef = collection(db, getNotesPath(userId));
-                     await addDoc(notesCollectionRef, noteData);
-                     showMessage("Success", "Task created successfully!");
-                 }
-                 closeNoteModal();
-             } catch (error) {
-                 console.error("Error saving task:", error);
-                 showMessage("Save Error", `Failed to save task: ${error.message}`);
-             }
-         };
-
-        window.toggleCompletion = async (noteId, isCompleted) => {
-            if (!userId) return;
-            try {
-                const noteRef = doc(db, getNotesPath(userId), noteId);
-                // Update completion status and set/clear completedAt timestamp
-                if (isCompleted) {
-                    await updateDoc(noteRef, { isCompleted: true, completedAt: serverTimestamp() });
+            // Group notes by status and render cards
+            notes.forEach(note => {
+                const cardHtml = createCard(note);
+                if (note.completed) {
+                    completedList.insertAdjacentHTML('beforeend', cardHtml);
+                    completedCount++;
                 } else {
-                    await updateDoc(noteRef, { isCompleted: false, completedAt: null });
+                    pendingList.insertAdjacentHTML('beforeend', cardHtml);
+                    pendingCount++;
                 }
-            } catch (error) {
-                console.error("Error toggling completion:", error);
-                showMessage("Update Error", `Failed to update task status: ${error.message}`);
-            }
-        };
+            });
 
-        window.deleteNote = async (noteId) => {
-            if (!userId) return;
-            
-            try {
-                const noteRef = doc(db, getNotesPath(userId), noteId);
-                await deleteDoc(noteRef);
-                showMessage("Success", "Task deleted successfully!");
-            } catch (error) {
-                console.error("Error deleting task:", error);
-                showMessage("Delete Error", `Failed to delete task: ${error.message}`);
+            // Update counts
+            document.getElementById('pending-count').textContent = `(${pendingCount})`;
+            document.getElementById('completed-count').textContent = `(${completedCount})`;
+
+            // Show/hide empty state
+            if (pendingCount === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
             }
-        };
+
+            // Start countdown timer for the first pending card (optional visual element)
+            if (pendingCount > 0) {
+                countdownInterval = setInterval(() => {
+                    // Update the time ago text for all cards every minute
+                    const allCards = document.querySelectorAll('[data-id]');
+                    allCards.forEach(card => {
+                        const noteId = card.getAttribute('data-id');
+                        const note = notes.find(n => n.id === noteId);
+                        if (note && note.timestamp) {
+                            const timeAgoEl = card.querySelector('.text-xs:not(.text-red-500)');
+                            if (timeAgoEl) {
+                                timeAgoEl.textContent = formatTimeAgo(note.timestamp.toDate());
+                            }
+                        }
+                    });
+                }, 60000); // update every minute
+            }
+        }
+
 
         // --- MODAL UTILITIES ---
 
         /**
-         * Opens the modal for creating or editing a task.
-         * @param {string} id - Task ID.
-         * @param {string} title - Task title.
-         * @param {string} content - Task content.
-         * @param {string} dateStr - Deadline date in YYYY-MM-DD or empty.
-         * @param {string} timeStr - Deadline time in HH:MM or empty.
+         * Opens the modal for creating a new task or editing an existing one.
          */
         window.openNoteModal = (id = '', title = '', content = '', dateStr = '', timeStr = '') => {
+            // 1. Initialize Quill if it doesn't exist
+            if (!noteQuill) {
+                // FIX: Use the selector for the toolbar element, not the array of options
+                noteQuill = new Quill('#note-content-container', {
+                    modules: {
+                        toolbar: '#note-content-toolbar' 
+                    },
+                    theme: 'snow',
+                    placeholder: 'Add any details or subtasks...'
+                });
+            }
+
             document.getElementById('note-id').value = id;
             document.getElementById('note-title').value = title;
-            // Decode content since it was encoded for the onclick attribute
-            document.getElementById('note-content').value = content;
             document.getElementById('note-deadline-date').value = dateStr || '';
             document.getElementById('note-deadline-time').value = timeStr || '';
+
+            // 2. Clear and Load content into Quill (Crucial step)
+            noteQuill.setContents([]); // Clear content first
+            
+            if (content && content !== '<p><br></p>') {
+                // Safely set the HTML content
+                noteQuill.clipboard.dangerouslyPasteHTML(0, content); 
+            }
             
             document.getElementById('modal-title').textContent = id ? 'Edit Task' : 'Create New Task';
             document.getElementById('note-modal').classList.remove('hidden');
@@ -1076,21 +962,35 @@
         window.closeNoteModal = () => {
             document.getElementById('note-modal').classList.add('hidden');
             document.getElementById('note-form').reset();
+            if (noteQuill) noteQuill.setContents([]); // Clear Quill editor
             // ensure date/time inputs cleared too
             if (document.getElementById('note-deadline-date')) document.getElementById('note-deadline-date').value = '';
             if (document.getElementById('note-deadline-time')) document.getElementById('note-deadline-time').value = '';
         };
 
-        // View modal helpers (populate read-only inputs; Edit opens editable modal)
+        /**
+         * Opens the read-only view modal for a task.
+         */
         window.openViewModal = (id = '', title = '', content = '', dateStr = '', timeStr = '') => {
             // set hidden id for reference
             document.getElementById('view-note-id').value = id || '';
 
             document.getElementById('view-modal-title').textContent = title || 'Task Details';
             document.getElementById('view-note-title').value = title || '';
-            document.getElementById('view-note-content').value = content || '';
             document.getElementById('view-note-deadline-date').value = dateStr || '';
             document.getElementById('view-note-deadline-time').value = timeStr || '';
+            
+            // NEW: Safely display rich text content
+            const contentDisplayEl = document.getElementById('view-note-content-display');
+            if (contentDisplayEl) {
+                // Only use the content if it's not the default empty Quill state
+                if (content && content !== '<p><br></p>') {
+                    contentDisplayEl.innerHTML = content || 'No details provided.';
+                } else {
+                    contentDisplayEl.innerHTML = 'No details provided.';
+                }
+            }
+
 
             // Configure Edit button: close view modal then open edit modal with same data
             const editBtn = document.getElementById('view-edit-btn');
@@ -1122,11 +1022,15 @@
             if (vm) vm.classList.add('hidden');
 
             // clear values
-            const fields = ['view-note-id','view-note-title','view-note-content','view-note-deadline-date','view-note-deadline-time'];
+            const fields = ['view-note-id','view-note-title','view-note-deadline-date','view-note-deadline-time'];
             fields.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
+            
+            // Clear the display div content
+            const contentDisplayEl = document.getElementById('view-note-content-display');
+            if (contentDisplayEl) contentDisplayEl.innerHTML = 'No details provided.';
 
             // remove handlers to avoid stale closures
             const editBtn = document.getElementById('view-edit-btn');
@@ -1135,32 +1039,229 @@
             if (deleteBtn) deleteBtn.onclick = null;
         };
 
-        // Toggle collapse/show for pending/completed sections
-        window.toggleSection = (which) => {
-            if (which === 'pending') {
-                const content = document.getElementById('pending-content');
-                const btn = document.getElementById('toggle-pending-btn');
-                if (!content || !btn) return;
-                const hidden = content.classList.toggle('hidden');
-                btn.textContent = hidden ? 'Show' : 'Hide';
-                localStorage.setItem('collapsed_pending', hidden ? 'true' : 'false');
-            } else if (which === 'completed') {
-                const content = document.getElementById('completed-content');
-                const btn = document.getElementById('toggle-completed-btn');
-                if (!content || !btn) return;
-                const hidden = content.classList.toggle('hidden');
-                btn.textContent = hidden ? 'Show' : 'Hide';
-                localStorage.setItem('collapsed_completed', hidden ? 'true' : 'false');
+
+        // --- FIRESTORE OPERATIONS ---
+
+        window.saveNote = async (event) => {
+            event.preventDefault();
+
+            if (!userId) {
+                showMessage("Error", "User not authenticated. Please sign in.");
+                return;
+            }
+
+            const id = document.getElementById('note-id').value;
+            const title = document.getElementById('note-title').value.trim();
+            
+            // --- FIX START: Improved logic for retrieving and checking Quill content ---
+            
+            // Get raw HTML content from Quill editor
+            const contentHTML = noteQuill ? noteQuill.root.innerHTML : ''; 
+            
+            // Trim the content and check if it matches the default empty state or is completely empty
+            const trimmedContent = contentHTML.trim();
+            const isEmptyQuillContent = (trimmedContent === '<p><br></p>' || trimmedContent === '');
+
+            // The content to save is either the cleaned HTML or an empty string
+            const contentToSave = isEmptyQuillContent ? '' : trimmedContent;
+            
+            // --- FIX END ---
+            
+            const deadlineDate = document.getElementById('note-deadline-date').value;
+            const deadlineTime = document.getElementById('note-deadline-time').value;
+            
+            if (!title) {
+                showMessage("Validation Error", "Task Title is required.");
+                return;
+            }
+
+            let deadlineTimestamp = null;
+            
+            if (deadlineDate) {
+                let dateString = deadlineDate;
+                if (deadlineTime) {
+                    dateString += `T${deadlineTime}`;
+                } else {
+                    // Default to noon (12:00:00) if no time is provided
+                    dateString += 'T12:00:00'; 
+                }
+                try {
+                    deadlineTimestamp = Timestamp.fromDate(new Date(dateString));
+                } catch (e) {
+                    console.error("Error creating deadline timestamp:", e);
+                    showMessage("Date Error", "Could not parse the deadline date. Please check the format.");
+                    return;
+                }
+            }
+
+
+            // Create a base object
+            const noteData = {
+                title: title,
+                // Use the checked and trimmed content
+                content: contentToSave, 
+                // Always update the time the task was last modified/saved
+                timestamp: serverTimestamp(),
+                // Store the raw date/time strings for pre-filling the modal later
+                deadlineDate: deadlineDate || '', 
+                deadlineTime: deadlineTime || ''
+            };
+
+            // Conditionally add/update deadline field
+            if (deadlineTimestamp) {
+                noteData.deadline = deadlineTimestamp;
+            } else {
+                noteData.deadline = null;
+            }
+
+            try {
+                if (id) {
+                    // Update existing note
+                    await updateDoc(doc(db, getNotesPath(userId), id), noteData);
+                    showMessage("Success", "Task updated successfully.");
+                } else {
+                    // Add new note
+                    await addDoc(collection(db, getNotesPath(userId)), {
+                        ...noteData,
+                        completed: false, // New tasks are always pending
+                        timestamp: serverTimestamp() // Set initial timestamp
+                    });
+                    showMessage("Success", "New task created successfully.");
+                }
+                closeNoteModal();
+            } catch (e) {
+                console.error("Error adding/updating document: ", e);
+                showMessage("Error", "Could not save task. Please try again.");
             }
         };
 
-        // Restore collapsed state on load
-        window.onload = () => {
-            // Re-apply theme (defensive) and wire anonymous sign-in link
-            applySavedTheme();
-            const anonLink = document.getElementById('anonymous-sign-in-link');
-            if (anonLink) anonLink.addEventListener('click', anonymousSignIn);
 
+        window.deleteNote = async (id) => {
+            if (!userId) {
+                showMessage("Error", "User not authenticated.");
+                return;
+            }
+            try {
+                await deleteDoc(doc(db, getNotesPath(userId), id));
+                showMessage("Success", "Task deleted.");
+            } catch (e) {
+                console.error("Error deleting document: ", e);
+                showMessage("Error", "Could not delete task. Please try again.");
+            }
+        };
+
+        window.toggleCompletion = async (event, id, isCompleted) => {
+            event.stopPropagation(); // Prevent card click event from firing
+            
+            if (!userId) {
+                showMessage("Error", "User not authenticated.");
+                return;
+            }
+            
+            try {
+                // Update the document to toggle the completed status
+                await updateDoc(doc(db, getNotesPath(userId), id), {
+                    completed: !isCompleted,
+                    timestamp: serverTimestamp() // Update timestamp to bring it to the top of its new list
+                });
+
+            } catch (e) {
+                console.error("Error toggling completion: ", e);
+                showMessage("Error", "Could not update task status. Please try again.");
+            }
+        };
+
+
+        /**
+         * Sets up the real-time listener for the user's tasks.
+         */
+        function startNotesListener() {
+            if (unsubscribeNotes) {
+                unsubscribeNotes(); // Unsubscribe from previous listener if present
+            }
+
+            if (!userId) {
+                console.warn("Cannot start notes listener: userId is null.");
+                return;
+            }
+
+            const notesQuery = query(
+                collection(db, getNotesPath(userId)),
+            );
+            
+            // Real-time listener
+            unsubscribeNotes = onSnapshot(collection(db, getNotesPath(userId)), (snapshot) => {
+                const notes = [];
+                snapshot.forEach(doc => {
+                    notes.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort the notes manually: Pending first (by date modified), then Completed (by date modified)
+                notes.sort((a, b) => {
+                    // 1. Sort by completed status (false comes before true)
+                    if (a.completed !== b.completed) {
+                        return a.completed ? 1 : -1;
+                    }
+                    // 2. Sort by timestamp (newest first - descending)
+                    const timeA = a.timestamp ? a.timestamp.toDate().getTime() : 0;
+                    const timeB = b.timestamp ? b.timestamp.toDate().getTime() : 0;
+                    return timeB - timeA;
+                });
+
+
+                renderNotes(notes);
+            }, (error) => {
+                console.error("Error listening to documents: ", error);
+                showMessage("Connection Error", "Could not load tasks in real-time. Check console for details.");
+            });
+        }
+
+
+        // --- HELPER FUNCTIONS ---
+
+        /**
+         * Formats a Date object into a readable "time ago" string.
+         * @param {Date} date - The date to format.
+         * @returns {string} The time ago string.
+         */
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) { return interval + "y ago"; }
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) { return interval + "mo ago"; }
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) { return interval + "d ago"; }
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) { return interval + "h ago"; }
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) { return interval + "m ago"; }
+            return "just now";
+        }
+
+        /**
+         * Toggles the visibility of the pending or completed section.
+         * @param {string} section - 'pending' or 'completed'.
+         */
+        window.toggleSection = (section) => {
+            const content = document.getElementById(`${section}-content`);
+            const button = document.getElementById(`toggle-${section}-btn`);
+
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                button.textContent = 'Hide';
+                localStorage.setItem(`collapsed_${section}`, 'false');
+            } else {
+                content.classList.add('hidden');
+                button.textContent = 'Show';
+                localStorage.setItem(`collapsed_${section}`, 'true');
+            }
+        };
+
+        // Post-sign-in/load setup
+        window.onload = () => {
             // restore pending collapsed state
             const pendingCollapsed = localStorage.getItem('collapsed_pending') === 'true';
             const pendingContent = document.getElementById('pending-content');
