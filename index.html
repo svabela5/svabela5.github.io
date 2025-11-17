@@ -320,8 +320,7 @@
         <header class="flex justify-between items-center py-4 border-b border-gray-200 mb-6">
             <div class="flex items-center space-x-4">
                 <h1 class="text-3xl font-extrabold text-teal-600">Task Manager</h1>
-                <!-- Version number is here svengoranabela -->
-                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.8</span>
+                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.9</span>
             </div>
             <div id="auth-controls" class="flex items-center space-x-3">
                 </div>
@@ -778,6 +777,37 @@
         // --- FIRESTORE CRUD & LISTENER ---
 
         /**
+         * Formats the time difference into a countdown string.
+         * @param {number} ms - The time difference in milliseconds.
+         * @returns {string|null} The formatted countdown string, or null if less than a second remaining.
+         */
+        function formatCountdown(ms) {
+            if (ms < 1000) {
+                return null;
+            }
+
+            const seconds = Math.floor(ms / 1000);
+            const days = Math.floor(seconds / (3600 * 24));
+            const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = seconds % 60;
+
+            // Build the string, omitting components that are zero, except for the last two
+            let countdown = '';
+            if (days > 0) {
+                countdown += `${days}d `;
+            }
+            if (days > 0 || hours > 0) {
+                countdown += `${hours}h `;
+            }
+            // Always show minutes and seconds if time remains
+            countdown += `${minutes}m `;
+            countdown += `${remainingSeconds}s`;
+
+            return countdown.trim();
+        }
+
+        /**
          * Creates the HTML structure for a single task card.
          * @param {Object} note - The task object from Firestore.
          * @returns {string} The HTML string for the card.
@@ -792,11 +822,13 @@
             
             // Format deadline date/time
             const deadline = note.deadline ? note.deadline.toDate() : null;
-            const timeDiff = deadline ? deadline.getTime() - new Date().getTime() : 0;
+            const deadlineMs = deadline ? deadline.getTime() : 0; // Milliseconds since epoch
+            const timeDiff = deadline ? deadlineMs - new Date().getTime() : 0;
             const isOverdue = !isCompleted && timeDiff < 0;
 
             let deadlineText = '';
             let deadlineClasses = 'text-sm font-medium';
+            let countdownHtml = '';
 
             if (deadline) {
                 const datePart = deadline.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -805,9 +837,22 @@
                 if (isOverdue) {
                     deadlineText = 'OVERDUE';
                     deadlineClasses += ' text-red-500 dark:text-red-400';
+                    countdownHtml = `<p id="countdown-${note.id}" class="text-xs font-mono text-red-500 dark:text-red-400 mt-1">Time has elapsed</p>`;
                 } else {
                     deadlineText = `${datePart} ${timePart}`;
                     deadlineClasses += ' text-teal-600 dark:text-teal-400';
+                    
+                    // Generate initial countdown HTML only if NOT overdue
+                    if (!isCompleted) {
+                        const initialCountdown = formatCountdown(timeDiff);
+                        if (initialCountdown) {
+                             // The ID is crucial for the interval to update it
+                             countdownHtml = `<p id="countdown-${note.id}" class="text-xs font-mono text-teal-600 dark:text-teal-400 mt-1">${initialCountdown} remaining</p>`;
+                        } else if (timeDiff > 0) {
+                            // Less than a second, display 'due now'
+                            countdownHtml = `<p id="countdown-${note.id}" class="text-xs font-mono text-teal-600 dark:text-teal-400 mt-1">Due now</p>`;
+                        }
+                    }
                 }
             } else {
                 deadlineText = 'No Deadline';
@@ -827,39 +872,96 @@
             const fullContent = note.content || '';
 
             return `
-                <div id="card-${note.id}" class="rounded-xl p-5 shadow-md border ${cardClasses}" data-id="${note.id}" 
+                <div id="card-${note.id}" class="flex flex-col rounded-xl p-5 shadow-md border ${cardClasses}" data-id="${note.id}" data-deadline-ms="${deadlineMs}"
                      onclick="openViewModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')">
                     
-                    <div class="flex justify-between items-start">
-                        <div class="flex-shrink-0 mr-3">
-                            <input type="checkbox" id="checkbox-${note.id}" class="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 cursor-pointer" 
-                                   ${isCompleted ? 'checked' : ''} onclick="toggleCompletion(event, '${note.id}', ${isCompleted})">
-                        </div>
-                        
-                        <div class="flex-grow min-w-0">
-                            <h3 class="text-xl font-bold mb-1 ${titleClasses}">${note.title}</h3>
-                            <div class="text-sm task-content ${contentClasses}">${note.content || 'No details provided.'}</div>
-                        </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-shrink-0 mr-3">
+                                <input type="checkbox" id="checkbox-${note.id}" class="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500 cursor-pointer" 
+                                       ${isCompleted ? 'checked' : ''} onclick="toggleCompletion(event, '${note.id}', ${isCompleted})">
+                            </div>
+                            
+                            <div class="flex-grow min-w-0">
+                                <h3 class="text-xl font-bold mb-1 ${titleClasses}">${note.title}</h3>
+                                <div class="text-sm task-content ${contentClasses}">${note.content || 'No details provided.'}</div>
+                            </div>
 
-                        <div class="flex-shrink-0 ml-4">
-                            <button onclick="event.stopPropagation(); openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')" 
-                                    class="p-1 text-gray-400 hover:text-teal-600 rounded-full transition duration-150 ${isCompleted ? 'invisible' : ''}" 
-                                    title="Edit Task">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9" />
-                                </svg>
-                            </button>
+                            <div class="flex-shrink-0 ml-4">
+                                <button onclick="event.stopPropagation(); openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')" 
+                                        class="p-1 text-gray-400 hover:text-teal-600 rounded-full transition duration-150 ${isCompleted ? 'invisible' : ''}" 
+                                        title="Edit Task">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                        <span class="${deadlineClasses}">${deadlineText}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">${timeAgo}</span>
+                    <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Last updated ${timeAgo}</p>
+                        <p class="${deadlineClasses}">Due Date: ${deadlineText}</p>
+                        ${countdownHtml}
                     </div>
 
                 </div>
             `;
         }
+
+        /**
+         * Updates the countdown timer for all visible pending tasks with a deadline.
+         */
+        function updateCountdowns() {
+            const now = new Date().getTime();
+            
+            // Select only the cards that are not completed (no opacity-70 class) and have a deadline timestamp
+            const pendingCards = document.querySelectorAll('#notes-list > div:not(.opacity-70)[data-deadline-ms]'); 
+
+            pendingCards.forEach(card => {
+                const noteId = card.getAttribute('data-id');
+                const deadlineMs = parseInt(card.getAttribute('data-deadline-ms'), 10);
+                
+                // Skip if no deadline is set
+                if (deadlineMs === 0) return;
+
+                const countdownEl = document.getElementById(`countdown-${noteId}`);
+                if (!countdownEl) return;
+
+                const timeDiff = deadlineMs - now;
+                const deadlineTextEl = card.querySelector('.text-sm.font-medium');
+                
+                if (timeDiff <= 0) {
+                    // Task is now overdue
+                    countdownEl.textContent = 'Time has elapsed';
+                    countdownEl.classList.remove('text-teal-600', 'dark:text-teal-400');
+                    countdownEl.classList.add('text-red-500', 'dark:text-red-400');
+                    
+                    if (deadlineTextEl && !deadlineTextEl.textContent.includes('OVERDUE')) {
+                        deadlineTextEl.textContent = 'Due Date: OVERDUE';
+                        deadlineTextEl.classList.remove('text-teal-600', 'dark:text-teal-400');
+                        deadlineTextEl.classList.add('text-red-500', 'dark:text-red-400');
+                    }
+                    
+                } else {
+                    // Update the countdown
+                    const countdownString = formatCountdown(timeDiff);
+                    if (countdownString) {
+                        countdownEl.textContent = `${countdownString} remaining`;
+                        // Ensure correct styling for remaining time
+                        countdownEl.classList.remove('text-red-500', 'dark:text-red-400');
+                        countdownEl.classList.add('text-teal-600', 'dark:text-teal-400');
+                    } else {
+                         // Less than a second
+                         countdownEl.textContent = 'Due now';
+                    }
+                }
+                
+                // Also update timeAgo every minute, if needed (re-using the 1s interval)
+                // We'll rely on the card re-render from the Firestore listener for timeAgo updates
+            });
+        }
+
 
         /**
          * Renders the list of tasks by clearing the existing lists and appending new cards.
@@ -904,22 +1006,12 @@
                 emptyState.classList.add('hidden');
             }
 
-            // Start countdown timer for the first pending card (optional visual element)
+            // Start 1-second countdown timer for all pending cards with a deadline
             if (pendingCount > 0) {
-                countdownInterval = setInterval(() => {
-                    // Update the time ago text for all cards every minute
-                    const allCards = document.querySelectorAll('[data-id]');
-                    allCards.forEach(card => {
-                        const noteId = card.getAttribute('data-id');
-                        const note = notes.find(n => n.id === noteId);
-                        if (note && note.timestamp) {
-                            const timeAgoEl = card.querySelector('.text-xs:not(.text-red-500)');
-                            if (timeAgoEl) {
-                                timeAgoEl.textContent = formatTimeAgo(note.timestamp.toDate());
-                            }
-                        }
-                    });
-                }, 60000); // update every minute
+                // Run update once immediately
+                updateCountdowns(); 
+                // Then set the interval to update every second
+                countdownInterval = setInterval(updateCountdowns, 1000); 
             }
         }
 
