@@ -216,6 +216,28 @@
             min-height: 100%;
         }
 
+        /* Quill editor placeholder — ensure it follows the theme colors */
+        #note-modal .ql-editor.ql-blank::before {
+            /* Quill uses attr(data-placeholder) as content when empty */
+            content: attr(data-placeholder) !important;
+            color: var(--muted) !important;
+            opacity: 1 !important;
+        }
+
+        /* Slightly brighter placeholder in dark mode for readability */
+        .dark #note-modal .ql-editor.ql-blank::before {
+            color: var(--muted) !important;
+            opacity: 0.95 !important;
+        }
+
+        /* Ensure the editor text itself respects the theme (reinforce) */
+        #note-modal .ql-editor {
+            color: var(--fg) !important;
+        }
+        .dark #note-modal .ql-editor {
+            color: var(--fg) !important;
+        }
+
         /* Read-only view modal content area with scrolling */
         #view-modal #view-note-content-display {
             border: 1px solid var(--input-border) !important;
