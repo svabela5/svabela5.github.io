@@ -11,7 +11,12 @@
 
     <script>
         (function(){
-            const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='#059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9' /></svg>`;
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24
+  24' fill='none' stroke='#059669' stroke-width='1.5' stroke-linecap='round' 
+  stroke-linejoin='round'><path d='M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652
+  2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 
+  0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 
+  6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9' /></svg>`;
             const href = 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
             let link = document.querySelector("link[rel~='icon']");
             if (!link) {
@@ -40,7 +45,8 @@
             --fg: #e6eef6;
             --card-bg: #071423; /* slightly lighter than page bg for modal */
             --muted: #9aa7bf;
-            --card-muted-bg-dark: rgba(255,255,255,0.02); /* completed card in dark mode */
+            --card-muted-bg-dark: rgba(255,255,255,0.02); /* completed card in 
+dark mode */
             --card-border-dark: rgba(255,255,255,0.06);
             --teal-border-dark: rgba(20,184,166,0.18);
             --input-border: rgba(255,255,255,0.08);
@@ -58,11 +64,13 @@
         /* Make existing Tailwind utility classes adapt to theme */
         .bg-white { background-color: var(--card-bg) !important; }
         .text-gray-900 { color: var(--fg) !important; }
-        .text-gray-800 { color: var(--fg) !important; } /* ensure note titles follow theme */
+        .text-gray-800 { color: var(--fg) !important; } /* ensure note titles 
+follow theme */
         .text-gray-700 { color: var(--fg) !important; }
         .text-gray-600 { color: var(--muted) !important; }
         .text-gray-500 { color: var(--muted) !important; }
-        .text-gray-400 { color: var(--muted) !important; } /* completed/note-muted text */
+        .text-gray-400 { color: var(--muted) !important; } /* completed/note-
+muted text */
         .border-gray-100 { border-color: rgba(148,163,184,0.08) !important; }
 
         /* Completed-card and related utility overrides (light mode) */
@@ -73,17 +81,24 @@
         .bg-gray-100 { background-color: #f3f4f6 !important; }
 
         /* Dark-mode variants for those utilities */
-        .dark .bg-gray-50 { background-color: var(--card-muted-bg-dark) !important; }
-        .dark .bg-gray-200 { background-color: rgba(255,255,255,0.03) !important; }
-        .dark .border-gray-200 { border-color: var(--card-border-dark) !important; }
-        .dark .border-teal-100 { border-color: var(--teal-border-dark) !important; }
-        .dark .bg-gray-100 { background-color: rgba(255,255,255,0.02) !important; }
+        .dark .bg-gray-50 { background-color: var(--card-muted-bg-dark) 
+!important; }
+        .dark .bg-gray-200 { background-color: rgba(255,255,255,0.03) 
+!important; }
+        .dark .border-gray-200 { border-color: var(--card-border-dark) 
+!important; }
+        .dark .border-teal-100 { border-color: var(--teal-border-dark) 
+!important; }
+        .dark .bg-gray-100 { background-color: rgba(255,255,255,0.02) 
+!important; }
 
         /* Checkbox / small elements adaptation */
-        .dark .bg-gray-100 { background-color: rgba(255,255,255,0.02) !important; }
+        .dark .bg-gray-100 { background-color: rgba(255,255,255,0.02) 
+!important; }
         .bg-gray-100 { background-color: #f3f4f6 !important; }
 
-        /* Keep the original task-content overflow clamp for truncation on cards */
+        /* Keep the original task-content overflow clamp for truncation on cards
+ */
         .task-content {
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -94,7 +109,8 @@
         }
 
         /* Small transition for card backgrounds */
-        .rounded-xl { transition: background-color 200ms ease, border-color 200ms ease; }
+        .rounded-xl { transition: background-color 200ms ease, border-color 
+200ms ease; }
 
         /* ---------------------------
            Modal / Form control fixes
@@ -138,7 +154,8 @@
             border-color: var(--input-border) !important;
         }
 
-        /* Make the visible input backgrounds match card background for contrast */
+        /* Make the visible input backgrounds match card background for contrast
+ */
         #note-modal .border,
         #view-modal .border,
         #message-modal .border {
@@ -193,7 +210,8 @@
         #note-modal .ql-toolbar.ql-snow {
             border-top-left-radius: 0.5rem; /* rounded-lg */
             border-top-right-radius: 0.5rem; /* rounded-lg */
-            background-color: var(--bg); /* Match page/modal color for contrast */
+            background-color: var(--bg); /* Match page/modal color for contrast 
+*/
             border-color: var(--input-border) !important;
         }
 
@@ -205,13 +223,15 @@
             border-color: var(--input-border) !important;
             /* Match background to card for contrast */
             background-color: var(--card-bg) !important; 
-            overflow-y: auto; /* Ensure the container itself scrolls if needed (for small screens) */
+            overflow-y: auto; /* Ensure the container itself scrolls if needed 
+(for small screens) */
         }
         
         /* Quill Editor text area */
         #note-modal .ql-editor {
             color: var(--fg) !important; 
-            /* Enforce vertical scrolling for the content inside the Quill editor */
+            /* Enforce vertical scrolling for the content inside the Quill 
+editor */
             overflow-y: auto !important; 
             padding: 1rem !important;
             min-height: 100%;
@@ -270,7 +290,9 @@
             color: var(--fg) !important;
         }
 
-        /* --------------------------- Modal buttons — improve contrast --------------------------- */
+        /* ---------------------------
+           Modal buttons — improve contrast 
+           --------------------------- */
 
         /* Primary action buttons (Save / OK) */
         #note-modal button[type="submit"],
@@ -279,7 +301,8 @@
             border-color: transparent !important;
             color: #ffffff !important;
             box-shadow: 0 6px 18px rgba(14,165,164,0.18) !important;
-            transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+            transition: transform 120ms ease, box-shadow 120ms ease, background-
+color 120ms ease;
         }
         #note-modal button[type="submit"]:hover,
         #message-modal button:hover {
@@ -298,41 +321,7 @@
         }
         #note-modal button[type="button"]:hover,
         #note-modal .bg-gray-100:hover {
-            background-color: rgba(148,163,184,0.10) !important;
-            transform: translateY(-1px) !important;
-        }
-
-        /* Dark mode adjustments for modal buttons */
-        .dark #note-modal button[type="submit"],
-        .dark #message-modal button {
-            background-color: #059669 !important; /* slightly brighter in dark */
-            box-shadow: 0 8px 22px rgba(0,0,0,0.45) !important;
-        }
-        .dark #note-modal button[type="submit"]:hover,
-        .dark #message-modal button:hover {
-            background-color: #047857 !important;
-        }
-        .dark #note-modal button[type="button"],
-        .dark #note-modal .bg-gray-100 {
-            background-color: rgba(255,255,255,0.02) !important;
-            border-color: rgba(255,255,255,0.06) !important;
-            color: var(--fg) !important;
-        }
-        .dark #note-modal button[type="button"]:hover,
-        .dark #note-modal .bg-gray-100:hover {
-            background-color: rgba(255,255,255,0.04) !important;
-        }
-
-        /* Make sure modal close / overlay text remains readable */
-        #note-modal, #view-modal, #message-modal {
-            color: var(--fg) !important;
-        }
-
-        /* Ensure .text-white used inside buttons remains readable in dark mode (keeps white) */
-        .dark #note-modal .text-white,
-        .dark #view-modal .text-white,
-        .dark #message-modal .text-white {
-            color: #fff !important;
+            background-color: rgba(148,163,184,0.08) !important;
         }
     </style>
 </head>
@@ -343,7 +332,7 @@
         <header class="flex justify-between items-center py-4 border-b border-gray-200 mb-6">
             <div class="flex items-center space-x-4">
                 <h1 class="text-3xl font-extrabold text-teal-600">Task Manager</h1>
-                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v1.9</span>
+                <span class="text-sm text-gray-500 dark:text-[#9aa7bf]">v2.0</span>
             </div>
             <div id="auth-controls" class="flex items-center space-x-3">
                 </div>
@@ -352,7 +341,8 @@
         <div id="loading" class="flex flex-col items-center justify-center py-20 text-gray-500">
             <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 
+5.824 3 7.938l3-2.647z"></path>
             </svg>
             <p class="mt-4 text-lg">Initializing Firebase...</p>
         </div>
@@ -361,12 +351,25 @@
             
             <div id="auth-wall" class="hidden flex flex-col items-center justify-center text-center py-20 bg-white rounded-xl shadow-lg border border-gray-100">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-teal-500 mb-4">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 18.07a4.99 4.99 
+0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 
+10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 
+1.637 1.096 2.614v3.187m-7.233-5.233H9m5.541 3.541H15" />
                 </svg>
                 <h2 class="text-2xl font-semibold text-gray-800 mb-2">Sign In to Manage Your Tasks</h2>
                 <p class="text-gray-600 mb-6">Your todo list is secured and synchronized across all your devices using your Google Account.</p>
                 <button onclick="googleSignIn()" class="bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 px-6 rounded-full shadow-lg transition duration-200 flex items-center">
-                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3"><path fill="#4285f4" d="M533.5 272.2c0-18.7-1.7-36.9-4.8-54.7H272.1v104.9h146.4c-6.7 35.8-26.6 66.8-54 87.7l-.1.1 83.1 64.1.6.6c51.2-47.5 81.3-116.5 81.3-199.1z"/><path fill="#34a853" d="M272.1 544.3c73.5 0 135.5-24.3 180.4-66l-83.1-64.1c-22.1 14.8-50.6 23.5-97.3 23.5-74.8 0-138.2-50.5-161.4-118.4l-.7-.1-81.8 63-.1.7c47.2 93.3 145.4 156.4 246.3 156.4z"/><path fill="#fbbc04" d="M110.7 325.3c-5.1-14.8-8-30.8-8-48.1s2.9-33.3 8-48.1l-.3-.1-83.1-64.1-.4-.1C3.3 152 0 209.7 0 272.2s3.3 120.2 27.2 176.6l83.5-64.4z"/><path fill="#ea4335" d="M272.1 107.5c41.3 0 77.8 14.2 106.8 41.9l73.4-71.5c-44.5-41.5-103.1-67.9-180.2-67.9C126.6 42 28.5 105.1 0 198.4l83.5 64.4c23.2-67.9 86.5-118.4 161.4-118.4z"/></svg>
+                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3"><path fill="#4285f4" d="M533.5 
+272.2c0-18.7-1.7-36.9-4.8-54.7H272.1v104.9h146.4c-6.7 35.8-26.6 66.8-54 
+87.7l-.1.1 83.1 64.1.6.6c51.2-47.5 81.3-116.5 81.3-199.1z"/><path fill="#34a853"
+d="M272.1 544.3c73.5 0 135.5-24.3 180.4-66l-83.1-64.1c-22.1 14.8-50.6 23.5-97.3
+23.5-74.8 0-138.2-50.5-161.4-118.4l-.7-.1-81.8 63-.1.7c47.2 93.3 145.4 156.4 
+246.3 156.4z"/><path fill="#fbbc04" d="M110.7 
+325.3c-5.1-14.8-8-30.8-8-48.1s2.9-33.3 8-48.1l-.3-.1-83.1-64.1-.4-.1C3.3 152 0 
+209.7 0 272.2s3.3 120.2 27.2 176.6l83.5-64.4z"/><path fill="#ea4335" d="M272.1 
+107.5c41.3 0 77.8 14.2 106.8 
+41.9l73.4-71.5c-44.5-41.5-103.1-67.9-180.2-67.9C126.6 42 28.5 105.1 0 198.4l83.5
+64.4c23.2-67.9 86.5-118.4 161.4-118.4z"/></svg>
                     Sign in with Google
                 </button>
                 <a id="anonymous-sign-in-link" href="#" class="mt-4 text-sm text-gray-500 hover:text-teal-600 underline">Continue as Guest (Tasks will NOT be cross-device compatible)</a>
@@ -377,8 +380,10 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-gray-700">Your Tasks</h2>
                     <button onclick="openNoteModal()" class="bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-200 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
+viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+ d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                         New Task
                     </button>
@@ -394,8 +399,21 @@
                         </div>
 
                     <div id="empty-state" class="hidden text-center py-16 bg-white rounded-xl shadow-inner mt-8">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400 mx-auto mb-3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.239 12.378h6.104M14.73 17.039h6.104m.024 4.091h-6.104M8.625 10.5h.008M21 16.5a2.25 2.25 0 01-2.25 2.25H9.75A2.25 2.25 0 017.5 16.5v-6A2.25 2.25 0 019.75 8.25h10.5A2.25 2.25 0 0122.5 10.5v6" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
+viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 
+text-gray-400 mx-auto mb-3">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 
+1.125 0 0113.5 
+7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.239 
+12.378h6.104M14.73 17.039h6.104m.024 
+4.091h-6.104M8.625 10.5h.008M21 
+16.5a2.25 2.25 0 01-2.25 2.25H9.75A2.25 
+2.25 0 017.5 16.5v-6A2.25 2.25 0 
+019.75 8.25h10.5A2.25 
+2.25 0 
+0122.5 
+10.5v6" />
                         </svg>
                         <p class="text-gray-500">You don't have any pending tasks. Click "New Task" to get started!</p>
                     </div>
@@ -406,6 +424,7 @@
 
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-semibold text-gray-700">Completed Tasks <span id="completed-count" class="text-sm text-gray-500 ml-2"></span></h3>
+
                     <button id="toggle-completed-btn" onclick="toggleSection('completed')" class="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 rounded-md bg-gray-100 hover:bg-gray-200 transition">Hide</button>
                 </div>
 
@@ -524,7 +543,6 @@
         </div>
     </div>
 
-
     <script type="module">
         // Global variables provided by the Canvas environment
         const APP_VERSION = '1.1';
@@ -565,7 +583,6 @@
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-
         // --- FIREBASE INITIALIZATION ---
         let app;
         let db;
@@ -573,6 +590,7 @@
         let userId = null;
         let unsubscribeNotes = null;
         let countdownInterval = null; // Global variable for the countdown timer
+
         let noteQuill = null; // Global Quill instance
 
         if (firebaseConfig) {
@@ -583,7 +601,6 @@
         } else {
             showMessage("Error", "Firebase configuration is missing. Cannot initialize the app.");
         }
-
 
         /**
          * Generates the Firestore path for a user's private notes collection.
@@ -603,6 +620,7 @@
             document.getElementById('message-modal-title').textContent = title;
             document.getElementById('message-modal-content').textContent = content;
             document.getElementById('message-modal').classList.remove('hidden');
+
         }
 
         window.closeMessageModal = () => {
@@ -704,11 +722,11 @@
             }
         }
 
-
         // --- UI RENDERING & AUTH STATE MANAGEMENT ---
 
         /**
          * Renders the header controls based on the user's authentication state.
+         *
          * (Logic remains similar to previous version, updated styles)
          */
         function renderHeader(user) {
@@ -729,9 +747,9 @@
                 }
 
                 // Determine initial checked state for theme toggle
-                const themeChecked = localStorage.getItem('theme') === 'dark' || 
+                const themeChecked = localStorage.getItem('theme') === 'dark' ||
                                      (localStorage.getItem('theme') === null && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
+                
                 authControls.innerHTML = `
                     <div class="flex items-center space-x-3">
                         <div class="relative profile-container">
@@ -766,11 +784,11 @@
 
         window.toggleProfileDropdown = (uid) => {
             const dropdown = document.getElementById(`profile-dropdown-${uid}`);
+
             if (dropdown) {
                 dropdown.classList.toggle('hidden');
             }
         }
-
 
         onAuthStateChanged(auth, (user) => {
             document.getElementById('loading').classList.add('hidden');
@@ -786,6 +804,7 @@
             } else {
                 userId = null;
                 document.getElementById('auth-wall').classList.remove('hidden');
+
                 document.getElementById('notes-interface').classList.add('hidden');
                 
                 renderHeader(null);
@@ -795,7 +814,6 @@
                 if (anonLink) anonLink.addEventListener('click', anonymousSignIn);
             }
         });
-
 
         // --- FIRESTORE CRUD & LISTENER ---
 
@@ -869,8 +887,8 @@
                     if (!isCompleted) {
                         const initialCountdown = formatCountdown(timeDiff);
                         if (initialCountdown) {
-                             // The ID is crucial for the interval to update it
-                             countdownHtml = `<p id="countdown-${note.id}" class="text-xs font-mono text-teal-600 dark:text-teal-400 mt-1">${initialCountdown} remaining</p>`;
+                            // The ID is crucial for the interval to update it
+                            countdownHtml = `<p id="countdown-${note.id}" class="text-xs font-mono text-teal-600 dark:text-teal-400 mt-1">${initialCountdown} remaining</p>`;
                         } else if (timeDiff > 0) {
                             // Less than a second, display 'due now'
                             countdownHtml = `<p id="countdown-${note.id}" class="text-xs font-mono text-teal-600 dark:text-teal-400 mt-1">Due now</p>`;
@@ -897,7 +915,7 @@
             return `
                 <div id="card-${note.id}" class="flex flex-col rounded-xl p-5 shadow-md border ${cardClasses}" data-id="${note.id}" data-deadline-ms="${deadlineMs}"
                      onclick="openViewModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')">
-                    
+                     
                     <div class="flex-1">
                         <div class="flex justify-between items-start">
                             <div class="flex-shrink-0 mr-3">
@@ -911,11 +929,15 @@
                             </div>
 
                             <div class="flex-shrink-0 ml-4">
-                                <button onclick="event.stopPropagation(); openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')" 
-                                        class="p-1 text-gray-400 hover:text-teal-600 rounded-full transition duration-150 ${isCompleted ? 'invisible' : ''}" 
-                                        title="Edit Task">
+                                <button onclick="event.stopPropagation(); openNoteModal('${note.id}', '${note.title.replace(/'/g, "\\'")}', \`${fullContent.replace(/`/g, "\\`")}\`, '${originalDateStr}', '${originalTimeStr}')"
+                                        class="p-1 text-gray-400 hover:text-teal-600 rounded-full transition duration-150 ${isCompleted ? 'invisible' : ''}"
+ 
+title="Edit Task">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 
+19.82a4.99 4.99 0 01-1.353.864 1.875 1.875 0 01-2.126 0 4.99 4.99 0 
+01-1.353-.864L3.62 10.187a1.875 1.875 0 012.652-2.652l1.687 1.687m4.275 
+6.071c.71.71 1.096 1.637 1.096 2.614v3.187m-7.233-5.233H9" />
                                     </svg>
                                 </button>
                             </div>
@@ -985,7 +1007,6 @@
             });
         }
 
-
         /**
          * Renders the list of tasks by clearing the existing lists and appending new cards.
          * @param {Array<Object>} notes - The array of task objects.
@@ -1006,17 +1027,39 @@
                 clearInterval(countdownInterval);
             }
 
-            // Group notes by status and render cards
-            notes.forEach(note => {
-                const cardHtml = createCard(note);
-                if (note.completed) {
-                    completedList.insertAdjacentHTML('beforeend', cardHtml);
-                    completedCount++;
-                } else {
-                    pendingList.insertAdjacentHTML('beforeend', cardHtml);
-                    pendingCount++;
+            // Sort pending tasks by deadline (ascending), tasks without deadlines at bottom
+            const pendingTasks = notes.filter(note => !note.completed);
+            const completedTasks = notes.filter(note => note.completed);
+
+            // Sort pending tasks by deadline ascending, tasks without deadlines last
+            pendingTasks.sort((a, b) => {
+                const aDeadline = a.deadline ? a.deadline.toDate().getTime() : null;
+                const bDeadline = b.deadline ? b.deadline.toDate().getTime() : null;
+                if (aDeadline !== null && bDeadline !== null) {
+                    return aDeadline - bDeadline;
                 }
+                if (aDeadline !== null) {
+                    return -1;
+                }
+                if (bDeadline !== null) {
+                    return 1;
+                }
+                return 0;
             });
+
+            // Render pending tasks
+            pendingTasks.forEach(note => {
+                const cardHtml = createCard(note);
+                pendingList.insertAdjacentHTML('beforeend', cardHtml);
+            });
+            // Render completed tasks (original order)
+            completedTasks.forEach(note => {
+                const cardHtml = createCard(note);
+                completedList.insertAdjacentHTML('beforeend', cardHtml);
+            });
+
+            pendingCount = pendingTasks.length;
+            completedCount = completedTasks.length;
 
             // Update counts
             document.getElementById('pending-count').textContent = `(${pendingCount})`;
@@ -1032,9 +1075,9 @@
             // Start 1-second countdown timer for all pending cards with a deadline
             if (pendingCount > 0) {
                 // Run update once immediately
-                updateCountdowns(); 
+                updateCountdowns();
                 // Then set the interval to update every second
-                countdownInterval = setInterval(updateCountdowns, 1000); 
+                countdownInterval = setInterval(updateCountdowns, 1000);
             }
         }
 
@@ -1060,6 +1103,7 @@
             document.getElementById('note-id').value = id;
             document.getElementById('note-title').value = title;
             document.getElementById('note-deadline-date').value = dateStr || '';
+
             document.getElementById('note-deadline-time').value = timeStr || '';
 
             // 2. Clear and Load content into Quill (Crucial step)
@@ -1154,7 +1198,6 @@
             if (deleteBtn) deleteBtn.onclick = null;
         };
 
-
         // --- FIRESTORE OPERATIONS ---
 
         window.saveNote = async (event) => {
@@ -1176,12 +1219,12 @@
             // Trim the content and check if it matches the default empty state or is completely empty
             const trimmedContent = contentHTML.trim();
             const isEmptyQuillContent = (trimmedContent === '<p><br></p>' || trimmedContent === '');
-
+            
             // The content to save is either the cleaned HTML or an empty string
             const contentToSave = isEmptyQuillContent ? '' : trimmedContent;
             
             // --- FIX END ---
-            
+
             const deadlineDate = document.getElementById('note-deadline-date').value;
             const deadlineTime = document.getElementById('note-deadline-time').value;
             
@@ -1208,7 +1251,6 @@
                     return;
                 }
             }
-
 
             // Create a base object
             const noteData = {
@@ -1250,7 +1292,6 @@
             }
         };
 
-
         window.deleteNote = async (id) => {
             if (!userId) {
                 showMessage("Error", "User not authenticated.");
@@ -1285,7 +1326,6 @@
                 showMessage("Error", "Could not update task status. Please try again.");
             }
         };
-
 
         /**
          * Sets up the real-time listener for the user's tasks.
@@ -1323,16 +1363,12 @@
                     return timeB - timeA;
                 });
 
-
                 renderNotes(notes);
             }, (error) => {
                 console.error("Error listening to documents: ", error);
                 showMessage("Connection Error", "Could not load tasks in real-time. Check console for details.");
             });
         }
-
-
-        // --- HELPER FUNCTIONS ---
 
         /**
          * Formats a Date object into a readable "time ago" string.
