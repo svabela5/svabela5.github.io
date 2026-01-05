@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year 2026 Progress Tracker</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --accent-gradient: linear-gradient(to right, #3b82f6, #4f46e5);
+            --border-color: #e2e8f0;
+            --box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            --stat-bg: #f8fafc;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #0f172a;
+                --card-bg: #1e293b;
+                --text-main: #f8fafc;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --stat-bg: rgba(30, 41, 59, 0.5);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            transition: background-color 0.5s ease;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background-color: var(--card-bg);
+            border-radius: 1.5rem;
+            box-shadow: var(--box-shadow);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .percentage-display {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .percentage-display span {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-left: 0.25rem;
+        }
+
+        .progress-container {
+            position: relative;
+            height: 1.5rem;
+            width: 100%;
+            background-color: var(--border-color);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--accent-gradient);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            transition: width 0.1s linear;
+        }
+
+        .stats-grid {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            flex: 1;
+            background-color: var(--stat-bg);
+            padding: 1rem;
+            border-radius: 1rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .countdown-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .countdown-title {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .countdown-timer {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 0.5rem;
+        }
+
+        .timer-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .unit-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .unit-label {
+            font-size: 0.625rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        footer {
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        footer p {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-style: italic;
+        }
+
+        .current-date {
+            margin-top: 2rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>The 2026 Clock</h1>
+            <div class="percentage-display">
+                <span id="percentage-val">0.0000000</span>
+                <span>%</span>
+            </div>
+        </header>
+
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Elapsed</div>
+                <div id="days-elapsed" class="stat-value">0 Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Remaining</div>
+                <div id="days-remaining" class="stat-value">0 Days</div>
+            </div>
+        </div>
+
+        <div class="countdown-section">
+            <h3 class="countdown-title">Countdown to 2027</h3>
+            <div class="countdown-timer">
+                <div class="timer-unit">
+                    <span id="hours" class="unit-value">00</span>
+                    <span class="unit-label">H</span>
+                </div>
+                <div class="timer-unit">
+                    <span id="minutes" class="unit-value">00</span>
+                    <span class="unit-label">M</span>
+                </div>
+                <div class="timer-unit">
+                    <span id="seconds" class="unit-value">00</span>
+                    <span class="unit-label">S</span>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>"Time is the most valuable thing a man can spend."</p>
+        </footer>
+    </div>
+
+    <div id="current-date" class="current-date"></div>
+
+    <script>
+        const startOf2026 = new Date('2026-01-01T00:00:00').getTime();
+        const endOf2026 = new Date('2027-01-01T00:00:00').getTime();
+        const totalDuration = endOf2026 - startOf2026;
+
+        const elements = {
+            percentage: document.getElementById('percentage-val'),
+            progressBar: document.getElementById('progress-bar'),
+            daysElapsed: document.getElementById('days-elapsed'),
+            daysRemaining: document.getElementById('days-remaining'),
+            hours: document.getElementById('hours'),
+            minutes: document.getElementById('minutes'),
+            seconds: document.getElementById('seconds'),
+            dateDisplay: document.getElementById('current-date')
+        };
+
+        function update() {
+            const now = Date.now();
+            const elapsed = now - startOf2026;
+            const remaining = endOf2026 - now;
+
+            let progress = 0;
+            if (elapsed > 0) {
+                progress = Math.min(100, (elapsed / totalDuration) * 100);
+            }
+            if (now > endOf2026) progress = 100;
+
+            elements.percentage.textContent = progress.toFixed(7);
+            elements.progressBar.style.width = progress + '%';
+
+            const dElapsed = Math.max(0, Math.floor(elapsed / (1000 * 60 * 60 * 24)));
+            const dRemaining = Math.max(0, Math.floor(remaining / (1000 * 60 * 60 * 24)));
+            
+            elements.daysElapsed.textContent = `${dElapsed} Days`;
+            elements.daysRemaining.textContent = `${dRemaining} Days`;
+
+            const h = Math.max(0, Math.floor((remaining / (1000 * 60 * 60)) % 24));
+            const m = Math.max(0, Math.floor((remaining / 1000 / 60) % 60));
+            const s = Math.max(0, Math.floor((remaining / 1000) % 60));
+
+            elements.hours.textContent = String(h).padStart(2, '0');
+            elements.minutes.textContent = String(m).padStart(2, '0');
+            elements.seconds.textContent = String(s).padStart(2, '0');
+
+            const dateObj = new Date();
+            elements.dateDisplay.textContent = dateObj.toLocaleDateString(undefined, { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        update();
+        setInterval(update, 50);
+    </script>
+</body>
+</html>
