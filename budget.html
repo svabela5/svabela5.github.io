@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rolling Budget Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; transition: all 0.3s ease; }
+        .safe-number { font-size: 3.5rem; line-height: 1; }
+        .hidden { display: none !important; }
+    </style>
+    <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAW7gPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAAAAAAAAEREQAAAAAAEREREAAAAAEREBERAAAAARAQEBEAAAAAABAQEQAAAAAAEBERAAAAAAERERAAAAAAERERAAAAAAEREBAAAAAAARAQEAAAAAABEBAQEQAAAAEREBERAAAAABERERAAAAAAARERAAAAAAAAEBAAAAD9fwAA+D8AAPAfAADhDwAA5U8AAP1PAAD9DwAA+B8AAPA/AADhfwAA5X8AAOVPAADhDwAA8B8AAPg/AAD9fwAA" rel="icon" type="image/x-icon">
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div id="auth-wall" class="max-w-md w-full mt-20 text-center bg-white p-10 rounded-3xl shadow-xl">
+        <h1 class="text-3xl font-black text-teal-600 mb-4">Budget Tracker</h1>
+        <p class="text-gray-500 mb-8">Sign in to manage your interest-bearing account transfers.</p>
+        <button onclick="googleSignIn()" class="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/0/google.svg" width="20">
+            Sign in with Google
+        </button>
+    </div>
+
+    <div id="app-content" class="max-w-md w-full mt-6 hidden">
+        <header class="flex justify-between items-center mb-8">
+            <div class="text-left">
+                <h1 class="text-xl font-black text-gray-800 uppercase tracking-tight">Current Pot</h1>
+                <p id="user-email" class="text-gray-400 text-xs"></p>
+            </div>
+            <button onclick="signOutUser()" class="text-xs font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest">Sign Out</button>
+        </header>
+
+        <div class="bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100 mb-6">
+            <div id="balance-display" class="safe-number font-black text-teal-600 mb-2">$0.00</div>
+            <p class="text-gray-400 font-medium uppercase text-xs tracking-widest">Total Available Balance</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <button onclick="openModal('Deposit')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl shadow-lg transition transform active:scale-95">
+                + Deposit
+            </button>
+            <button onclick="openModal('Transfer')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-2xl shadow-lg transition transform active:scale-95">
+                - Transfer
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="text-sm font-bold text-gray-800 mb-4 border-b pb-2">History</h3>
+            <div id="history-list" class="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="fixed inset-0 bg-black/60 hidden z-40 items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <h2 id="modal-title" class="text-xl font-bold mb-4"></h2>
+            <input type="number" id="modal-input" class="w-full border-2 border-gray-100 rounded-xl p-4 text-2xl font-bold focus:border-teal-500 outline-none mb-4" placeholder="0.00" step="0.01">
+            <div class="flex space-x-3">
+                <button onclick="closeModal()" class="flex-1 py-3 text-gray-500 font-bold">Cancel</button>
+                <button id="modal-confirm" class="flex-1 py-3 bg-teal-600 text-white rounded-xl font-bold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBZAl0HY7kkTmUztjREZJ8rLAamSoI0bK8",
+            authDomain: "todo-list-e2c31.firebaseapp.com",
+            projectId: "todo-list-e2c31",
+            storageBucket: "todo-list-e2c31.firebasestorage.app",
+            messagingSenderId: "324100323047",
+            appId: "1:324100323047:web:ba12c2153215c74c9a9442"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUserId = null;
+        let unsubscribe = null;
+
+        // --- Auth Logic ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                document.getElementById('auth-wall').classList.add('hidden');
+                document.getElementById('app-content').classList.remove('hidden');
+                document.getElementById('user-email').textContent = user.email;
+                startListener();
+            } else {
+                currentUserId = null;
+                document.getElementById('auth-wall').classList.remove('hidden');
+                document.getElementById('app-content').classList.add('hidden');
+                if (unsubscribe) unsubscribe();
+            }
+        });
+
+        window.googleSignIn = async () => {
+            const provider = new GoogleAuthProvider();
+            try { await signInWithPopup(auth, provider); } catch (e) { alert(e.message); }
+        };
+
+        window.signOutUser = () => signOut(auth);
+
+        // --- Data Logic ---
+        function startListener() {
+            const q = query(collection(db, `users/${currentUserId}/rolling_transactions`), orderBy("date", "desc"));
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                let rollingBalance = 0;
+                const historyHtml = [];
+                
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    const isDeposit = data.type === 'Deposit';
+                    rollingBalance += isDeposit ? data.amount : -data.amount;
+                    
+                    historyHtml.push(`
+                        <div class="flex justify-between items-center text-sm border-b border-gray-50 pb-2 group">
+                            <div class="flex flex-col">
+                                <span class="font-bold text-gray-700">${data.type}</span>
+                                <span class="text-xs text-gray-400">${data.date.toDate().toLocaleDateString()}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-black ${isDeposit ? 'text-green-500' : 'text-red-500'}">
+                                    ${isDeposit ? '+' : '-'}$${data.amount.toFixed(2)}
+                                </span>
+                                <button onclick="deleteTransaction('${id}')" class="text-gray-300 hover:text-red-500 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                });
+
+                document.getElementById('balance-display').textContent = `$${rollingBalance.toFixed(2)}`;
+                document.getElementById('history-list').innerHTML = historyHtml.length ? historyHtml.join('') : '<p class="text-center text-gray-400 text-xs py-4">No transactions yet.</p>';
+            });
+        }
+
+        window.deleteTransaction = async (id) => {
+            if(confirm("Delete this transaction?")) {
+                await deleteDoc(doc(db, `users/${currentUserId}/rolling_transactions`, id));
+            }
+        };
+
+        // --- UI Logic ---
+        window.openModal = (type) => {
+            const overlay = document.getElementById('modal-overlay');
+            const input = document.getElementById('modal-input');
+            document.getElementById('modal-title').textContent = `Log ${type}`;
+            overlay.classList.replace('hidden', 'flex');
+            input.focus();
+
+            document.getElementById('modal-confirm').onclick = async () => {
+                const val = parseFloat(input.value);
+                if(val > 0) {
+                    await addDoc(collection(db, `users/${currentUserId}/rolling_transactions`), {
+                        amount: val, type: type, date: new Date()
+                    });
+                    closeModal();
+                }
+            };
+        };
+
+        window.closeModal = () => {
+            document.getElementById('modal-overlay').classList.replace('flex', 'hidden');
+            document.getElementById('modal-input').value = '';
+        };
+    </script>
+</body>
+</html>
